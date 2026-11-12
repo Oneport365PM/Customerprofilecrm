@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>OnePort CRM Deals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: fixed dark-green rail + top bar, content area switches between pipeline board, deal, RFQ and quote views.
+   Single light look on purpose: it mirrors the live OnePort CRM screens. */
+:root {
+  color-scheme: light;
+  --rail: #0d3b1d;
+  --ink: #12301d;
+  --ink-2: #3c4a40;
+  --muted: #7a8278;
+  --bg: #f5f5f1;
+  --surface: #ffffff;
+  --surface-2: #f6f6f2;
+  --line: #e6e7e0;
+  --lime: #c6f04d;
+  --lime-soft: #edf8d6;
+  --lime-ink: #2f6a12;
+  --gold: #c99a06;
+  --green: #1f7a32;
+  --green-soft: #e4f4e3;
+  --red: #b4322a;
+  --red-soft: #fbe9e7;
+  --amber: #9a6a00;
+  --amber-soft: #fff3d6;
+  --blue: #22579a;
+  --blue-soft: #e5eefb;
+  --font: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--ink); font-size: 14px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+.app { display: flex; min-height: 100%; }
+.rail { width: 70px; flex: none; background: var(--rail); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 0 20px; position: sticky; top: 0; height: 100vh; }
+.rail .home { width: 40px; height: 40px; border-radius: 10px; background: #f3b81c; display: grid; place-items: center; margin-bottom: 14px; }
+.rail .ico { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: #dfe9df; }
+.rail .ico.on { background: rgba(255,255,255,.09); }
+.rail .me { margin-top: auto; width: 34px; height: 34px; border-radius: 50%; background: #3aa34c; color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { background: var(--surface); display: flex; align-items: center; gap: 12px; padding-block: 18px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); }
+.topbar .crm-pill { background: var(--rail); color: #fff; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 8px; }
+.topbar h1 { font-size: 15px; margin: 0; font-weight: 700; }
+.wordmark { margin-left: auto; font-weight: 600; color: var(--rail); font-size: 18px; letter-spacing: -.2px; }
+.wordmark b { font-weight: 800; }
+.content { padding-block: 24px 48px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); min-width: 0; }
+
+/* tabs */
+.tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; }
+.tab { background: none; border: 0; padding: 12px 16px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--ink); font-weight: 500; border-bottom-color: var(--rail); }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 16px; position: relative; }
+.stat.hl { background: #eef5e6; }
+.stat .lbl { font-size: 13px; color: var(--ink-2); }
+.stat .val { font-size: 24px; font-weight: 700; margin: 14px 0 4px; }
+.stat .val.gold { color: var(--gold); }
+.stat .sub { font-size: 12.5px; color: var(--ink-2); }
+.stat .badge-ico { position: absolute; right: 16px; top: 16px; width: 28px; height: 28px; border-radius: 7px; background: var(--lime-soft); display: grid; place-items: center; color: var(--lime-ink); }
+
+/* toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.search { flex: 1 1 280px; display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; height: 40px; min-width: 0; }
+.search input { border: 0; outline: 0; flex: 1; min-width: 0; background: transparent; }
+.sel { height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0 12px; min-width: 150px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; padding: 0 16px; height: 38px; }
+.seg button.on { background: var(--rail); color: #fff; font-weight: 600; }
+.btn { height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; }
+.btn.primary { background: var(--lime); border-color: var(--lime); color: var(--rail); font-weight: 600; }
+.btn.dark { background: var(--rail); border-color: var(--rail); color: #fff; }
+.btn.sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+a.btn { text-decoration: none; color: var(--ink); }
+.count { font-size: 12.5px; color: var(--ink-2); margin-bottom: 10px; }
+
+/* board */
+.board-wrap { overflow-x: auto; padding-bottom: 6px; }
+.board { display: grid; grid-template-columns: repeat(5, minmax(250px, 1fr)); gap: 20px; min-width: 1310px; }
+.col-h { padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.col-h .t { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; }
+.col-h .n { width: 20px; height: 20px; border-radius: 50%; background: var(--lime); font-size: 11px; display: grid; place-items: center; font-weight: 700; }
+.col-h .n.dk { background: var(--rail); color: #fff; }
+.col-h .m { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+.cards { display: flex; flex-direction: column; gap: 12px; }
+.card { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0; box-shadow: 0 1px 2px rgba(16,40,20,.05); width: 100%; transition: box-shadow .15s, border-color .15s; }
+.col { border-radius: 12px; transition: background .15s, box-shadow .15s; }
+.col.over { background: #eef6e2; box-shadow: 0 0 0 2px var(--lime) inset; }
+.card[draggable="true"] { cursor: grab; }
+.card.dragging { opacity: .45; }
+.card.ghost { position: fixed; z-index: 70; pointer-events: none; opacity: .95; box-shadow: 0 12px 30px rgba(16,40,20,.25); transform: rotate(2deg); }
+.card:hover { border-color: #cfd8c8; box-shadow: 0 4px 14px rgba(16,40,20,.08); }
+.card .top { padding: 12px 14px 12px; border-bottom: 1px solid var(--line); }
+.card .did { font-size: 11px; color: var(--muted); letter-spacing: .3px; margin-bottom: 4px; }
+.card .row1 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.card .nm { font-weight: 600; font-size: 14px; }
+.card .amt { font-weight: 600; color: var(--gold); white-space: nowrap; }
+.card .row2 { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; }
+.owner { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+.av { width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 9.5px; font-weight: 600; display: grid; place-items: center; flex: none; }
+.card .bot { padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap; }
+.links { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 12px; }
+
+.cls { font-size: 10.5px; border-radius: 999px; padding: 2px 9px; border: 1px solid; font-weight: 500; white-space: nowrap; }
+.cls.Growth { color: #c37a00; border-color: #f0c77a; background: #fffaf0; }
+.cls.SME { color: var(--ink-2); border-color: #c9cdc5; background: var(--surface-2); }
+.cls.Enterprise { color: var(--green); border-color: #9fd3a3; background: var(--green-soft); }
+.pill { font-size: 11.5px; border-radius: 6px; padding: 3px 9px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.pill.won { background: var(--green-soft); color: var(--green); }
+.pill.lost { background: var(--red-soft); color: var(--red); }
+.pill.stage { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.pill.quoting { background: var(--green-soft); color: var(--green); }
+.pill.issued { background: var(--blue-soft); color: var(--blue); }
+.pill.new { background: var(--amber-soft); color: var(--amber); }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; letter-spacing: .2px; }
+.chip.rfq { background: var(--lime-soft); color: var(--lime-ink); }
+.chip.quote { background: var(--blue-soft); color: var(--blue); }
+a.chip, button.chip { border: 0; text-decoration: none; }
+
+/* list */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; min-width: 900px; }
+th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: #fafbf7; }
+
+/* detail pages */
+.back { background: none; border: 0; color: var(--green); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; margin-bottom: 16px; }
+.back.grey { color: var(--ink-2); font-weight: 400; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; min-width: 0; }
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.head h2 { margin: 0 0 8px; font-size: 22px; font-weight: 700; text-wrap: balance; }
+.head .ids { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.idtag { font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; letter-spacing: .3px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.stack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.sec-t { font-size: 11.5px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); margin: 0 0 20px; }
+.kv { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 24px; }
+.kv .k { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+.kv .v { font-size: 14.5px; }
+.kv .v.gold { color: var(--gold); font-weight: 600; }
+.kv .full { grid-column: 1 / -1; }
+.note { background: var(--surface-2); border-radius: 8px; padding: 16px 18px; min-height: 90px; color: var(--ink-2); }
+.so { display: flex; gap: 10px; align-items: center; }
+.so .av { width: 34px; height: 34px; border-radius: 8px; font-size: 12px; background: var(--rail) !important; color: var(--lime); }
+.so b { display: block; font-size: 13.5px; font-weight: 600; }
+.so small { font-size: 11.5px; color: var(--ink-2); }
+
+/* linked tree */
+.lk-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.lk-head .sec-t { margin: 0; }
+.lk-sum { font-size: 12.5px; color: var(--ink-2); margin-bottom: 18px; }
+.tree { display: flex; flex-direction: column; gap: 14px; }
+.node { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.node-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; flex-wrap: wrap; }
+.node-row .ic { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+.node.rfq > .node-row .ic { background: var(--lime-soft); color: var(--lime-ink); }
+.node.quote > .node-row .ic { background: var(--blue-soft); color: var(--blue); }
+.node.ship > .node-row .ic { background: var(--amber-soft); color: var(--amber); }
+.node-row .tx { flex: 1; min-width: 160px; }
+.node-row .tx b { font-size: 14px; letter-spacing: .2px; }
+.node-row .tx div { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.node-row .amt { color: var(--gold); font-weight: 600; }
+.kids { margin: 0 14px 14px 30px; padding-left: 18px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.kids .node { position: relative; }
+.kids .node::before { content: ""; position: absolute; left: -20px; top: 27px; width: 18px; border-top: 2px solid var(--line); }
+.empty-kid { font-size: 12.5px; color: var(--muted); padding: 10px 2px; position: relative; }
+.empty-kid::before { content: ""; position: absolute; left: -20px; top: 20px; width: 14px; border-top: 2px dashed var(--line); }
+.empty-box { border: 1.5px dashed var(--line); border-radius: 10px; padding: 22px; text-align: center; color: var(--ink-2); font-size: 13px; }
+.empty-box .btn { margin-top: 12px; }
+.callout { display: flex; gap: 10px; align-items: flex-start; background: var(--amber-soft); color: #6b4a00; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 14px; }
+.callout.ok { background: var(--lime-soft); color: var(--lime-ink); }
+
+/* history */
+.hist { display: flex; flex-direction: column; }
+.ev { position: relative; padding: 0 0 22px 32px; }
+.ev::before { content: ""; position: absolute; left: 6px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #c8dcb5; }
+.ev::after { content: ""; position: absolute; left: 9.5px; top: 20px; bottom: 4px; border-left: 1px dashed var(--line); }
+.ev:last-child::after { display: none; }
+.ev .r { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.ev b { font-size: 14px; font-weight: 600; }
+.ev .meta { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.ev .cm { background: var(--surface-2); border-radius: 6px; padding: 9px 10px; margin-top: 10px; font-size: 13.5px; color: var(--ink-2); }
+.tag { font-size: 11px; border-radius: 6px; padding: 2px 8px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+.tag.won { background: var(--lime-soft); border-color: transparent; color: var(--lime-ink); font-weight: 600; }
+.tag.link { background: var(--blue-soft); border-color: transparent; color: var(--blue); font-weight: 600; }
+
+/* RFQ / quote */
+.rfq-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rfq-title h2 { margin: 0; font-size: 22px; letter-spacing: .3px; }
+.subt { color: var(--ink-2); margin-top: 4px; font-size: 13.5px; }
+.route { display: flex; align-items: center; gap: 14px; background: var(--surface-2); border-radius: 10px; padding: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.route .pt { min-width: 0; }
+.route .pt small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.route .pt b { font-size: 15px; }
+.route .arrow { flex: 1; min-width: 40px; border-top: 2px dashed #c4ccc0; position: relative; }
+.linkcard { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); width: 100%; text-align: left; }
+.linkcard:hover { border-color: #cfd8c8; }
+.linkcard .tx { flex: 1; min-width: 0; }
+.linkcard .tx small { display: block; font-size: 11.5px; color: var(--muted); }
+.linkcard .tx b { font-size: 14px; }
+.qdoc-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 18px; }
+.qno { font-size: 20px; font-weight: 700; letter-spacing: .4px; }
+.lines td.r, .lines th.r { text-align: right; }
+.lines table { min-width: 520px; }
+.total { display: flex; justify-content: flex-end; gap: 30px; padding: 14px; font-size: 15px; }
+.total b { color: var(--gold); font-size: 18px; }
+
+/* modal */
+.scrim { position: fixed; inset: 0; background: rgba(10, 30, 16, .38); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); z-index: 50; }
+.modal { background: var(--surface); border-radius: 14px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal h3 { margin: 0 0 4px; font-size: 18px; }
+.modal .lead { color: var(--ink-2); font-size: 13px; margin: 0 0 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.field input, .field select, .field textarea { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface); width: 100%; }
+.field textarea { min-height: 90px; resize: vertical; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.opt { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 12px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--green); background: #f6fbf1; }
+.opt input { margin-top: 3px; accent-color: var(--green); }
+.opt b { font-size: 13.5px; }
+.opt div div { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.mfoot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.err { color: var(--red); font-size: 12.5px; margin: -4px 0 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--rail); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 60; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+/* clickable record IDs */
+a.idlink { color: var(--green); font-weight: 600; text-decoration: underline; text-decoration-color: #a9d3ad; text-underline-offset: 3px; letter-spacing: .2px; }
+a.idlink:hover { text-decoration-color: var(--green); }
+a.chip { cursor: pointer; }
+a.chip:hover { filter: brightness(.96); text-decoration: underline; }
+.pill.quoted { background: var(--rail); color: #fff; font-weight: 600; }
+.pill.ready { background: var(--green-soft); color: var(--green); font-weight: 600; }
+.pill.await { background: var(--amber-soft); color: var(--amber); font-weight: 600; }
+
+/* RFQ page (mirrors live RFQ screen) */
+.rfq-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+.rfq-card .hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 22px 26px 20px; border-bottom: 1px solid var(--line); }
+.rfq-card .bd { padding: 24px 26px; }
+.f3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 24px; }
+.f4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 20px; }
+.f3 .k, .f4 .k { font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+.f3 .v, .f4 .v { font-size: 14.5px; overflow-wrap: anywhere; }
+.acc { border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; }
+.acc summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; font-weight: 600; font-size: 14.5px; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc[open] summary { border-bottom: 1px solid var(--line); }
+.acc[open] summary svg { transform: rotate(180deg); }
+.acc .in { padding: 20px 18px; }
+.h-sm { font-weight: 600; font-size: 15px; margin: 28px 0 0; }
+
+/* Quotes page (mirrors live Quotes screen) */
+.qwrap { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+.qlist { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.qlist .qh { display: flex; align-items: center; gap: 8px; padding: 16px 16px 10px; }
+.qlist .qh span { font-size: 12px; letter-spacing: .8px; color: var(--ink-2); font-weight: 500; margin-right: auto; }
+.qtabs { display: flex; gap: 18px; padding: 0 16px; border-bottom: 1px solid var(--line); font-size: 12.5px; overflow-x: auto; }
+.qtabs span { padding: 10px 0; white-space: nowrap; color: var(--ink-2); }
+.qtabs span.on { color: var(--ink); font-weight: 600; border-bottom: 2px solid var(--rail); }
+.qlist .shw { font-size: 12px; color: var(--ink-2); padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.qi { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 18px; border-left: 3px solid transparent; }
+.qi.on { background: #f1f9e6; border-left-color: #7cc04a; }
+.qi .a { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.qi .a b { font-size: 14px; letter-spacing: .3px; white-space: nowrap; }
+.qi .a .pill { white-space: normal; text-align: right; }
+.qi .c { font-size: 14px; margin-top: 6px; }
+.qi .s { font-size: 11.5px; font-weight: 600; margin-top: 2px; }
+.qi .r { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.qmain { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-width: 0; overflow: hidden; }
+.qbar { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.qbar .ttl { flex: 1; min-width: 200px; }
+.qbar .ttl b { font-size: 16px; letter-spacing: .3px; }
+.qbar .ttl span { color: var(--ink-2); font-size: 13.5px; margin-left: 8px; }
+.qbar select { height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; min-width: 170px; background: var(--surface); }
+.qdoc { padding: 20px max(20px, 4%); background: var(--surface-2); }
+.qpaper { background: var(--surface); border-radius: 6px; padding: 24px 28px; box-shadow: 0 1px 3px rgba(16,40,20,.06); }
+.dealstrip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--lime-soft); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 18px; }
+.valid { text-align: right; color: var(--gold); font-weight: 500; font-size: 13.5px; }
+.addr { font-size: 13.5px; color: var(--ink-2); padding: 14px 0 18px; border-bottom: 1px solid var(--line); }
+.bk-h { display: flex; align-items: baseline; gap: 12px; padding: 22px 0 18px; }
+.bk-h b { font-size: 16px; }
+.cbox { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin: 22px 0; }
+.cbox .t { font-size: 11.5px; font-weight: 600; letter-spacing: .6px; color: var(--ink-2); margin-bottom: 16px; }
+.oc-t { font-weight: 700; font-size: 15px; letter-spacing: .3px; margin: 26px 0 14px; padding-top: 22px; border-top: 1px solid var(--line); }
+.oc table { min-width: 720px; }
+.oc th { background: #eef2e6; }
+.oc td { border-bottom: 0; font-size: 14px; }
+.sub-t { text-align: right; padding: 14px 0; font-size: 14px; color: var(--ink-2); }
+.sub-t b { color: var(--gold); }
+.redn { background: #c8171e; color: #fff; border-radius: 10px; padding: 16px 20px; font-size: 14px; line-height: 1.65; display: flex; gap: 10px; }
+.terms-t { font-weight: 700; font-size: 15px; margin: 30px 0 14px; padding-top: 24px; border-top: 1px solid var(--line); }
+.terms { border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px 18px 42px; margin: 0; font-size: 14px; line-height: 1.7; }
+
+/* Payment terms qualifying checklist */
+.modal.wide { width: min(780px, 100%); padding: 0; }
+.modal.wide .mh { padding: 22px 24px 14px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.modal.wide .mh .lead { margin: 0; }
+.modal.wide .mb { padding: 8px 24px 4px; }
+.modal.wide .mf { padding: 14px 24px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: var(--surface); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.kyc-sec { padding: 18px 0 6px; }
+.kyc-sec:last-child { border-bottom: 0; }
+.kyc-sec h4 { margin: 0 0 14px; font-size: 15px; font-weight: 600; color: var(--ink); }
+.kyc-sec h4 small { font-size: 13px; font-weight: 400; color: var(--ink-2); }
+.ticks { display: flex; flex-direction: column; gap: 8px; }
+.tick { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer; font-size: 14px; font-weight: 400 !important; color: var(--ink) !important; line-height: 1.5; }
+.tick:has(input:checked) { border-color: var(--green); background: #f3faec; }
+.field .tick input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--green); padding: 0; }
+.tick.off { opacity: .55; cursor: not-allowed; background: var(--surface-2); }
+.tick .na { display: none; font-style: normal; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tick.off .na { display: block; }
+.field.bad .tick:not(.off):not(:has(input:checked)) { border-color: var(--red); }
+.kyc-sec h4 span { width: 22px; height: 22px; border-radius: 50%; background: var(--lime); color: var(--rail); display: grid; place-items: center; font-size: 11px; }
+.kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.kgrid .full { grid-column: 1 / -1; }
+.field label .req { color: var(--red); }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choices label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 400; color: var(--ink); cursor: pointer; }
+.choices label:has(input:checked) { border-color: var(--green); background: #f3faec; }
+.field .choices input { accent-color: var(--green); margin: 0; width: 16px; height: 16px; padding: 0; flex: none; }
+.choices label { white-space: nowrap; }
+.choices.col label { white-space: normal; }
+.field.bad input, .field.bad select, .field.bad .choices label { border-color: var(--red); }
+.field.bad > label { color: var(--red); }
+.confirm { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--ink-2); flex: 1 1 100%; }
+.mf #k-back { margin-left: auto; }
+.confirm input { accent-color: var(--green); margin-top: 3px; }
+.confirm.bad { color: var(--red); }
+.linkbtn { background: none; border: 0; color: var(--green); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; padding: 0; font-size: 13px; }
+.kyc-meta { font-size: 12px; color: var(--muted); margin: -12px 0 16px; }
+.flags { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.flags li { display: flex; gap: 8px; align-items: center; background: var(--amber-soft); color: #6b4a00; border-radius: 6px; padding: 7px 10px; font-size: 12.5px; }
+.kyc-all { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.kyc-all summary { cursor: pointer; color: var(--green); font-weight: 500; font-size: 13px; }
+.kyc-all dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 20px; margin: 14px 0 0; font-size: 13px; }
+.kyc-all dt { color: var(--ink-2); }
+.kyc-all dd { margin: 0; overflow-wrap: anywhere; }
+.kprog { display: flex; gap: 6px; margin-top: 14px; }
+.kprog span { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+.kprog span.done { background: var(--green); }
+.kprog span.on { background: var(--lime); }
+.kstep-l { font-size: 12px; color: var(--ink-2); margin-top: 8px; font-weight: 500; }
+.kyc-sec .confirm { margin: 6px 0 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.modal.wide .mb { min-height: 260px; }
+.choices.col { flex-direction: column; align-items: flex-start; }
+.kyc-grp { margin-top: 14px; }
+.kyc-grp b { font-size: 12px; letter-spacing: .5px; text-transform: uppercase; color: var(--ink-2); }
+.kyc-grp ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.kyc-grp li { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); }
+.kyc-grp li .bx { margin-top: 2px; }
+.kyc-grp b { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink); }
+.kyc-grp li b { font-size: 13px; color: inherit; }
+.kyc-grp li.on { color: var(--ink); }
+.kyc-grp .bx { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #c9cdc5; display: grid; place-items: center; flex: none; }
+.kyc-grp li.on .bx { background: var(--green); border-color: var(--green); color: #fff; }
+.pill.pass { background: var(--green-soft); color: var(--green); font-weight: 600; }
+@media (max-width: 560px) { .kgrid, .kyc-all dl { grid-template-columns: minmax(0, 1fr); } }
+
+/* Finance: customer profile review */
+.rail a.ico { text-decoration: none; }
+.rail a.ico:hover { background: rgba(255,255,255,.06); }
+.bellw { position: relative; }
+.bell { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; position: relative; color: var(--ink-2); }
+.bell .dot { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--red); color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; padding: 0 5px; }
+.npanel { position: absolute; right: 0; top: 48px; width: min(380px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 14px 40px rgba(16,40,20,.16); z-index: 40; overflow: hidden; }
+.npanel .nh { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.npanel .nl { max-height: 380px; overflow: auto; }
+.ni { display: flex; gap: 12px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 14px 16px; }
+.ni:last-child { border-bottom: 0; }
+.ni.unread { background: #f6fbef; }
+.ni .ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; flex: none; background: var(--lime-soft); color: var(--lime-ink); }
+.ni.warn .ic { background: var(--amber-soft); color: var(--amber); }
+.ni b { font-size: 13.5px; display: block; }
+.ni p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+.ni small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.ni-empty { padding: 26px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+.rv-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
+.rv-acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.sec-h { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; }
+.sec-h .sec-t { margin: 0; }
+.sec-h .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--lime-soft); color: var(--lime-ink); display: grid; place-items: center; flex: none; }
+.kv .v a { color: var(--green); overflow-wrap: anywhere; }
+.kv .v.muted { color: var(--muted); }
+.ck-panel { position: sticky; top: 16px; }
+.ck-panel .ckh { margin: -24px -24px 0; padding: 20px 24px 14px; border-bottom: 1px solid var(--line); }
+.ck-panel .ckh h3 { margin: 0 0 4px; font-size: 16.5px; }
+.ck-panel .ckh .lead { margin: 0; color: var(--ink-2); font-size: 12.5px; }
+.ck-panel .ckf { margin: 8px -24px -24px; padding: 14px 24px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ck-panel .ckf { justify-content: flex-end; }
+.kyc-sec.locked { border-bottom: 1px dashed var(--line); padding-bottom: 16px; }
+.kyc-sec.locked .tick { cursor: default; }
+.kyc-sec.locked .tick:has(input:checked) { opacity: 1; }
+.kyc-sec.locked h4 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kyc-sec h4 .lock { margin-left: auto; width: auto; height: auto; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 2px 8px; }
+.callout.ready { align-items: center; flex-wrap: wrap; }
+.ftrack-p { margin-bottom: 20px; }
+.ftrack { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ftrack li { display: flex; gap: 10px; align-items: flex-start; position: relative; min-width: 0; }
+.ftrack li:not(:last-child)::after { content: ""; position: absolute; left: 32px; right: -8px; top: 11px; border-top: 2px solid var(--line); }
+.ftrack li.done:not(:last-child)::after { border-top-color: var(--green); }
+.ftrack li > div { background: var(--surface); position: relative; z-index: 1; padding-right: 8px; min-width: 0; }
+.ftrack .dt { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; flex: none; position: relative; z-index: 1; font-size: 12px; font-weight: 700; }
+.ftrack li.done .dt { background: var(--green); border-color: var(--green); color: #fff; }
+.ftrack li.now .dt { border-color: var(--amber); background: var(--amber-soft); box-shadow: 0 0 0 4px var(--amber-soft); }
+.ftrack li.bad .dt { background: var(--red); border-color: var(--red); color: #fff; }
+.ftrack b { display: block; font-size: 13.5px; font-weight: 600; }
+.ftrack li.todo b { color: var(--muted); }
+.ftrack small { display: block; font-size: 12px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; overflow-wrap: anywhere; }
+.ftrack small b { display: inline; font-size: 12px; color: var(--red); font-weight: 500; }
+.ftrack-f { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+@media (max-width: 720px) { .ftrack { grid-template-columns: minmax(0, 1fr); } .ftrack li:not(:last-child)::after { left: 10px; right: auto; top: 26px; bottom: -14px; border-top: 0; border-left: 2px solid var(--line); } .ftrack li.done:not(:last-child)::after { border-left-color: var(--green); } }
+.callout.ready span { flex: 1; min-width: 200px; }
+.ck-panel .ckb { min-height: 240px; }
+.ask { display: flex; gap: 8px; align-items: center; background: var(--blue-soft); color: var(--blue); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; margin: 0 0 12px; }
+.pill.review { background: var(--amber-soft); color: var(--amber); font-weight: 600; }
+.pill.back { background: var(--red-soft); color: var(--red); font-weight: 600; }
+.callout.bad { background: var(--red-soft); color: var(--red); }
+.callout a { color: inherit; font-weight: 600; }
+.sf-hint { font-size: 12.5px; color: var(--ink-2); margin: 4px 0 0; }
+.mail { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 13px; }
+.mail-h { background: var(--surface-2); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--line); }
+.mail-h div { overflow-wrap: anywhere; }
+.mail-h span { display: inline-block; width: 64px; color: var(--muted); font-size: 12px; }
+.mail-b { padding: 14px; line-height: 1.55; color: var(--ink-2); }
+.mail-b p { margin: 0 0 10px; }
+.mail-t { min-width: 0; width: 100%; margin: 4px 0 14px; }
+.mail-t th, .mail-t td { white-space: normal; padding: 6px 0; font-size: 13px; background: none; text-transform: none; letter-spacing: 0; vertical-align: top; overflow-wrap: anywhere; }
+.mail-t th { width: 120px; color: var(--muted); font-weight: 500; padding-right: 12px; }
+.mail-t td { color: var(--ink); }
+.mail-t tbody tr { cursor: default; }
+.mail-t tbody tr:hover { background: none; }
+.mail-btn { display: inline-block; background: var(--rail); color: #fff; border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 12.5px; }
+.fl { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 16px 0 8px; }
+.tab .cnt { background: var(--lime); color: var(--rail); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 1px 8px; }
+.tab:not(.on) .cnt { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+@media (max-width: 1000px) { .ck-panel { position: static; } }
+.btn[hidden] { display: none; }
+@media (max-width: 560px) { .wordmark { display: none; } .bellw { margin-left: auto; } }
+@media (max-width: 720px) { .ck-panel .ckh, .ck-panel .ckf { margin-left: -18px; margin-right: -18px; padding-left: 18px; padding-right: 18px; } .ck-panel .ckh { margin-top: -18px; } .ck-panel .ckf { margin-bottom: -18px; } }
+
+@media (max-width: 1100px) {
+  .qwrap { grid-template-columns: minmax(0, 1fr); }
+  .f4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1000px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .f3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .f3, .f4 { grid-template-columns: minmax(0, 1fr); }
+  .qpaper { padding: 18px; }
+}
+@media (max-width: 720px) {
+  .rail { display: none; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .frow { grid-template-columns: minmax(0, 1fr); }
+  .sel { min-width: 0; flex: 1 1 140px; }
+  .topbar, .content { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .panel { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <div class="home" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d3b1d" stroke-width="2.2"><path d="M4 20h16M7 16v-5M12 16V7M17 16v-8"/></svg></div>
+    <a class="ico on" id="r-crm" href="#pipeline" title="CRM" aria-label="CRM"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16M7 16v-5M12 16V7M17 16v-8"/></svg></a>
+    <div class="ico" title="Customers"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c1.8.7 3 2.5 3.5 5.2"/></svg></div>
+    <div class="ico" title="Shipments"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 15h18l-2 4H5zM6 15V9h12v6M9 9V6h6v3"/></svg></div>
+    <div class="ico" title="RFQs"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/><path d="M9 11h6M9 15h6"/></svg></div>
+    <div class="ico" title="Quotes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/></svg></div>
+    <a class="ico" id="r-fin" href="#finance" title="Finance · customer reviews" aria-label="Finance customer reviews"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15 9c-.5-1-1.6-1.6-3-1.6-1.8 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.4-1.3 2.3-3 2.3-1.5 0-2.6-.6-3.1-1.7M12 6v1.4M12 16.6V18"/></svg></a>
+    <div class="ico" title="Insights"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v16M8 5a4 4 0 0 0-3 6 4 4 0 0 0 3 7M16 5a4 4 0 0 1 3 6 4 4 0 0 1-3 7"/></svg></div>
+    <div class="me">NK</div>
+  </nav>
+  <div class="main">
+    <header class="topbar">
+      <span class="crm-pill" id="tb-pill">CRM</span>
+      <h1 id="tb-h">CRM</h1>
+      <span class="wordmark">OnePort <b>365</b></span>
+      <div class="bellw" id="bellw"></div>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+/* ---------- sample data ---------- */
+const OWNERS = {
+  EA: { name: 'Emmanuel Akinrodolu', color: '#8a9a8c', title: 'Sales Executive' },
+  KU: { name: 'Kimeen Ugwu', color: '#4f6455', title: 'Sales Executive' },
+  NM: { name: 'Nkechi Moses', color: '#8a9a8c', title: 'Sales Executive' },
+  SE: { name: 'Sotonye Ebadan', color: '#8a9a8c', title: 'Sales Executive' },
+  GO: { name: 'Gift Osaremen', color: '#4f6455', title: 'Sales Executive' },
+  OA: { name: 'Okpanachi Adaji', color: '#8a9a8c', title: 'Sales Executive' },
+  AJ: { name: 'Aishat Jimoh', color: '#123b20', title: 'Sales Executive' },
+  BC: { name: 'Biggie Cole', color: '#8a9a8c', title: 'Sales Executive' },
+  CE: { name: 'Chinedu Enworom', color: '#4f6455', title: 'Sales Executive' },
+  KA: { name: 'Kayode Akintade', color: '#123b20', title: 'Sales Executive' },
+  FA: { name: 'Folake Adebayo', color: '#22579a', title: 'Finance Analyst' },
+  SYS: { name: 'OnePort365 system', color: '#7a8278', title: 'Automatic' },
+};
+const STAGES = [
+  { key: 'prospect', label: 'Prospect' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'quote', label: 'Quote Issued' },
+  { key: 'closed', label: 'Closed' },
+];
+const stageLabel = k => STAGES.find(s => s.key === k).label;
+
+const deals = [
+  { id: 'OP-26-11-021', name: 'Ovuvuenem', amount: 200, owner: 'EA', cls: 'Growth', created: '2026-11-05', stage: 'prospect', contact: 'Tola Ovuvuenem', product: 'FreightSaver' },
+  { id: 'OP-26-11-020', name: "Brian's logistics", amount: 2000, owner: 'KU', cls: 'Growth', created: '2026-11-05', stage: 'prospect', contact: 'Brian Okafor', product: 'Haulage' },
+  { id: 'OP-26-10-018', name: 'Fast track export', amount: 2300, owner: 'NM', cls: 'Growth', created: '2026-10-29', stage: 'prospect', contact: 'Grace Kelmo', product: 'FreightSaver' },
+  { id: 'OP-26-10-017', name: 'Soni test logistics pvt ltd', amount: 50000, owner: 'SE', cls: 'SME', created: '2026-10-28', stage: 'prospect', contact: 'Ravi Soni', product: 'Ocean freight' },
+  { id: 'OP-26-11-022', name: 'Fast track export', amount: 4000, owner: 'SE', cls: 'Growth', created: '2026-11-06', stage: 'contacted', contact: 'Grace Kelmo', product: 'FreightSaver',
+    route: 'Apapa, Nigeria → Rotterdam, Netherlands', commodity: 'Hulled sesame seeds', volume: '4 × 40 FT containers a month', note: 'Monthly sesame export programme from December. Customer asked for terms in line with their last two shipments.' },
+  { id: 'OP-26-10-016', name: 'Fast track export', amount: 20000, owner: 'NM', cls: 'Growth', created: '2026-10-19', stage: 'contacted', contact: 'Grace Kelmo', product: 'Ocean freight' },
+  { id: 'OP-26-08-009', name: 'Airtel networks limited', amount: 0, owner: 'GO', cls: 'Enterprise', created: '2026-08-24', stage: 'contacted', contact: 'Ifeoma Bello', product: 'Air freight' },
+  { id: 'OP-26-10-014', name: 'Chevron', amount: 10000, owner: 'OA', cls: 'Growth', created: '2026-10-08', stage: 'contacted', contact: 'Daniel Ekong', product: 'Project cargo',
+    route: 'Onne, Nigeria → Houston, USA', commodity: 'Drilling equipment (breakbulk)', volume: '2 breakbulk lots, about 180 t' },
+  { id: 'OP-26-11-023', name: 'Manuchar Trading House Int Nigeria', amount: 3500, owner: 'KA', cls: 'Enterprise', created: '2026-11-03', stage: 'qualified', contact: 'Ekene Abiaziem', product: 'Ocean freight', rfqs: ['RFQ-26-11-015'],
+    route: 'Aarhus, Denmark → Apapa, Nigeria', commodity: 'Chemical (FAK)', volume: '3 × 20 FT dry, 28 t',
+    note: 'Chemical import, Aarhus to Apapa. Customer needs the NAFDAC permit cleared before shipping.' },
+  { id: 'OP-26-09-012', name: 'Regency overseas (rol)', amount: 10900, owner: 'GO', cls: 'SME', created: '2026-09-22', stage: 'qualified', contact: 'Arjun Mehta', product: 'Ocean freight' },
+  { id: 'OP-26-09-011', name: 'Alliance chemicals global', amount: 550, owner: 'GO', cls: 'SME', created: '2026-09-22', stage: 'qualified', contact: 'Uche Nwosu', product: 'Customs clearance' },
+  { id: 'OP-26-09-010', name: 'Cybele cosmetics', amount: 7840, owner: 'GO', cls: 'SME', created: '2026-09-22', stage: 'qualified', contact: 'Funmi Adeyemi', product: 'Air freight' },
+  { id: 'OP-26-09-013', name: 'Premium agro', amount: 2940, owner: 'GO', cls: 'Growth', created: '2026-09-22', stage: 'qualified', contact: 'Sani Musa', product: 'FreightSaver' },
+  { id: 'OP-26-11-024', name: 'Manuchar Trading House Int Nigeria', amount: 73, owner: 'KA', cls: 'Enterprise', created: '2026-11-04', stage: 'quote', contact: 'Ekene Abiaziem', product: 'Customs clearance (NAFDAC permit)', quotes: ['Q-26-11-017'],
+    note: 'Permit-to-clear request. Quote total is NGN 105,000 (about $73).' },
+  { id: 'OP-26-09-008', name: 'Eunisell', amount: 5200, owner: 'AJ', cls: 'SME', created: '2026-09-03', stage: 'quote', contact: 'Kunle Adebayo', product: 'Ocean freight' },
+  { id: 'OP-26-07-004', name: 'Ovuvuenem', amount: 2000, owner: 'EA', cls: 'Enterprise', created: '2026-07-15', stage: 'quote', contact: 'Tola Ovuvuenem', product: 'Haulage' },
+  { id: 'OP-26-07-005', name: 'Money minded', amount: 1, owner: 'BC', cls: 'SME', created: '2026-07-15', stage: 'quote', contact: 'Biggie Cole', product: 'FreightSaver' },
+  { id: 'OP-26-07-006', name: 'Crochets', amount: 44444, owner: 'CE', cls: 'SME', created: '2026-07-15', stage: 'quote', contact: 'Ada Crochets', product: 'Ocean freight' },
+  { id: 'OP-26-11-019', name: 'Fast track export', amount: 1000, owner: 'NM', cls: 'Growth', created: '2026-11-04', stage: 'closed', outcome: 'won', contact: 'Grace Kelmo', product: 'FreightSaver' },
+  { id: 'OP-26-10-015', name: 'Fast track export', amount: 30000, owner: 'NM', cls: 'SME', created: '2026-10-09', stage: 'closed', outcome: 'won', contact: 'Grace Kelmo', product: 'Ocean freight' },
+  { id: 'OP-26-10-013', name: 'Fast track export', amount: 20000, owner: 'NM', cls: 'SME', created: '2026-10-09', stage: 'closed', outcome: 'won', contact: 'Grace Kelmo', product: 'FreightSaver' },
+  { id: 'OP-26-08-007', name: 'Delta foods', amount: 6800, owner: 'KU', cls: 'Growth', created: '2026-08-12', stage: 'closed', outcome: 'lost', contact: 'Efe Okoro', product: 'Reefer haulage' },
+];
+
+const rfqs = {
+  'RFQ-26-11-015': {
+    id: 'RFQ-26-11-015', status: 'Quoted', quoteStatus: 'Ready', created: '2026-11-05T11:20', dealId: 'OP-26-11-023',
+    service: 'Ocean Freight FCL', customer: 'Manuchar Trading House Int Nigeria', contact: 'Ekene Abiaziem', email: 'ekene.odagu@manuchar.com',
+    origin: 'Aarhus (DKAAR) Denmark', destination: 'Apapa (NGAPP) Nigeria', routeShort: 'Aarhus, Denmark → Apapa, Nigeria',
+    goodsValue: 'USD 40,000,000', bl: '—', branch: 'Lagos', source: 'Backoffice', incoterm: 'CFR', owner: 'KA', documents: '—',
+    notes: 'Request for Permit to clear - Manuchar Customer has approved for payment',
+    containers: [{ cls: 'FAK', commodity: 'Chemical', size: '20 FT', type: 'Dry', count: 3, weight: 28 }],
+    quotes: ['Q-26-11-017'],
+  },
+};
+
+const quotes = {
+  'Q-26-11-017': {
+    id: 'Q-26-11-017', rfqId: 'RFQ-26-11-015', dealId: 'OP-26-11-024', status: 'Ready', issued: '2026-11-06T10:05', validDays: 7, cur: '₦',
+    charges: [{ basis: 'Nafdac Permit', unit: 3, ft20: 3, cost: 30000, margin: '14.2857%', sell: 105000, desc: 'Per Container' }],
+  },
+};
+const quoteTotal = q => q.charges.reduce((a, c) => a + c.sell, 0);
+const qMoney = (q, n) => q.cur + Math.round(n).toLocaleString('en-US');
+/* Other quotes in the Quotes list (shown for context, from the live screen) */
+const QUOTE_LIST = [
+  { id: 'Q-26-11-017', status: 'Ready', co: 'Manuchar Trading House Int Nigeria', svc: 'Ocean Freight · FCL', route: 'Aarhus, Denmark → Apapa, Nigeria', date: '2026-11-06' },
+  { id: 'Q-26-11-016', status: 'Ready', co: 'Bioscape Commodities Africa Limited', svc: 'Customs Brokerage', route: 'Tincan/Lagos, Nigeria → Leixões, Portugal', date: '2026-11-06' },
+  { id: 'Q-26-11-015', status: 'Ready', co: 'Bioscape Commodities Africa Limited', svc: 'Customs Brokerage', route: 'Tincan/Lagos, Nigeria → Gdansk, Poland', date: '2026-11-06' },
+  { id: 'Q-26-11-014', status: 'Awaiting Customer Decision', co: 'Greenpeg', svc: 'Air Freight', route: 'PNQ → LOS', date: '2026-11-04' },
+  { id: 'Q-26-11-013', status: 'Awaiting Customer Decision', co: 'Greenpeg', svc: 'Air Freight', route: 'PNQ → LOS', date: '2026-11-04' },
+];
+
+/* Company and contact profiles that Finance sees on the customer profile review page */
+const COMPANIES = {
+  'Fast track export': { industry: 'Agro-commodity export', rc: 'RC 1482093', tin: '22841937-0001', address: '14 Creek Road, Apapa, Lagos', web: 'fasttrackexport.ng',
+    contacts: { 'Grace Kelmo': { role: 'Head of Logistics', email: 'grace.kelmo@fasttrackexport.ng', phone: '+234 803 412 7765' } } },
+  'Manuchar Trading House Int Nigeria': { industry: 'Chemical distribution', rc: 'RC 905512', tin: '10394471-0001', address: 'Plot 7, Block J, Isolo Industrial Estate, Lagos', web: 'manuchar.com',
+    contacts: { 'Ekene Abiaziem': { role: 'Import Manager', email: 'ekene.odagu@manuchar.com', phone: '+234 909 555 0142' } } },
+  'Chevron': { industry: 'Oil and gas', rc: 'RC 6135', tin: '00218765-0001', address: '2 Chevron Drive, Lekki Peninsula, Lagos', web: 'chevron.com',
+    contacts: { 'Daniel Ekong': { role: 'Procurement Lead, Logistics', email: 'daniel.ekong@chevron.com', phone: '+234 802 300 4419' } } },
+};
+const companyOf = x => COMPANIES[x.name] || {};
+const contactOf = x => (companyOf(x).contacts || {})[x.contact] || {};
+
+/* Payment terms sales asks for when sending a deal to Finance (same three classes as checklist section A) */
+const TERMS = {
+  new: { t: 'Cash Before Service', d: 'Full payment before service starts' },
+  adv: { t: 'Advance payment', d: 'Minimum 90% paid upfront before service' },
+  credit: { t: 'Credit terms', d: 'Service first, invoice paid within an agreed credit period' },
+};
+const termsText = r => r && r.terms ? TERMS[r.terms].t + (r.termsNote ? ` · ${r.termsNote}` : '') : 'Not stated';
+
+const MANUCHAR_KYC = {
+  cls: ['adv'],
+  onb: ['framework', 'wc', 'deviation', 'documented'],
+  clr: ['clear'],
+};
+/* Finance review per deal. Sales sends the deal to Finance when it moves into Qualified;
+   Finance checks the customer profile, completes the payment terms checklist, and the deal moves to Qualified. */
+const reviews = {
+  'OP-26-11-023': { status: 'cleared', a: MANUCHAR_KYC, sentBy: 'KA', sentAt: '2026-11-04T11:40', from: 'Contacted', terms: 'adv', termsNote: '90% upfront, balance on delivery', reviewedBy: 'FA', reviewedAt: '2026-11-04T16:05', openedBy: 'FA', openedAt: '2026-11-04T13:10', used: true },
+  'OP-26-11-024': { status: 'cleared', a: MANUCHAR_KYC, sentBy: 'KA', sentAt: '2026-11-04T10:20', from: 'Prospect', terms: 'adv', termsNote: '90% upfront, balance on delivery', reviewedBy: 'FA', reviewedAt: '2026-11-04T14:55', openedBy: 'FA', openedAt: '2026-11-04T12:30', used: true },
+  'OP-26-10-014': { status: 'pending', sentBy: 'OA', sentAt: '2026-11-11T09:05', from: 'Contacted', terms: 'credit', termsNote: '30 days from invoice',
+    note: 'Customer procurement policy only allows 30-day credit. Needs Internal Control credit assessment.' },
+};
+const reviewOf = id => reviews[id];
+const isPending = id => (reviews[id] || {}).status === 'pending';
+/* Notifications sent to sales when Finance clears or sends back a deal */
+const notifs = [
+  { to: 'KA', dealId: 'OP-26-11-023', kind: 'ok', t: 'Manuchar Trading House Int Nigeria is ready to move to Qualified', p: 'Finance completed the payment terms checklist. You can now move OP-26-11-023 to Qualified.', at: '2026-11-04T16:10', read: true },
+];
+
+const history = {
+  'OP-26-10-014': [
+    { t: 'Sent to Finance for payment terms review', by: 'OA', at: '2026-11-11T09:05', tag: 'Finance review', comment: 'Requested: Credit terms · 30 days from invoice' },
+  ],
+  'OP-26-11-023': [
+    { t: 'Moved deal from Contacted to Qualified', by: 'KA', at: '2026-11-04T16:10', tag: 'Qualified' },
+    { t: 'Finance cleared the payment terms checklist', by: 'FA', at: '2026-11-04T16:05', tag: 'Cleared', tagCls: 'won', comment: 'Existing Advance Payment customer: minimum 90% upfront. Sales notified: ready to move to Qualified.' },
+    { t: 'Sent to Finance for payment terms review', by: 'KA', at: '2026-11-04T11:40', tag: 'Finance review' },
+    { t: 'Moved deal from Prospect to Contacted', by: 'KA', at: '2026-11-03T12:30', tag: 'Contacted' },
+  ],
+  'OP-26-11-024': [
+    { t: 'Moved deal from Qualified to Quote Issued', by: 'KA', at: '2026-11-06T10:12', tag: 'Quote Issued', comment: 'Quote sent to Ekene. Valid for 7 days.' },
+    { t: 'Moved deal from Prospect to Qualified', by: 'KA', at: '2026-11-04T15:00', tag: 'Qualified' },
+    { t: 'Finance cleared the payment terms checklist', by: 'FA', at: '2026-11-04T14:55', tag: 'Cleared', tagCls: 'won', comment: 'Existing Advance Payment customer: minimum 90% upfront. Sales notified: ready to move to Qualified.' },
+    { t: 'Sent to Finance for payment terms review', by: 'KA', at: '2026-11-04T10:20', tag: 'Finance review' },
+  ],
+  'OP-26-10-013': [
+    { t: 'Deal marked Won', by: 'NM', at: '2026-10-09T09:44', tag: 'Won', tagCls: 'won', comment: 'Won' },
+    { t: 'Moved deal from Prospect to Quote Issued', by: 'NM', at: '2026-10-09T09:44', tag: 'Quote Issued', comment: 'Customer is ready to move forward' },
+  ],
+};
+
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => '$' + Math.round(n).toLocaleString('en-US');
+const pad = n => String(n).padStart(2, '0');
+const d = s => new Date(s.length <= 10 ? s + 'T09:42' : s);
+const dmy = s => { const x = d(s); return `${pad(x.getDate())}-${pad(x.getMonth() + 1)}-${x.getFullYear()}`; };
+const slash = s => { const x = d(s); return `${pad(x.getDate())}/${pad(x.getMonth() + 1)}/${x.getFullYear()}`; };
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const longD = s => { const x = d(s); return `${MON[x.getMonth()]} ${x.getDate()}, ${x.getFullYear()}`; };
+const time = s => { const x = d(s); let h = x.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${pad(x.getMinutes())} ${ap}`; };
+const TODAY = new Date();
+const daysAgo = s => Math.round((TODAY - d(s)) / 864e5);
+const nowIso = () => { const x = new Date(); return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}T${pad(x.getHours())}:${pad(x.getMinutes())}`; };
+const av = k => `<span class="av" style="background:${OWNERS[k].color}">${k}</span>`;
+const dealById = id => deals.find(x => x.id === id);
+/* Rule: an RFQ is tied to a deal in Qualified, a quote is tied to a deal in Quote Issued. A deal only shows its own records. */
+const dealQuotes = deal => (deal.quotes || []).filter(q => quotes[q] && quotes[q].dealId === deal.id);
+const dealRfqs = deal => (deal.rfqs || []).filter(r => rfqs[r] && rfqs[r].dealId === deal.id);
+const ID_RE = /\b(RFQ-\d{2}-\d{2}-\d{3}|Q-\d{2}-\d{2}-\d{3}|OP-\d{2}-\d{2}-\d{3})\b/g;
+const exists = id => !!(rfqs[id] || quotes[id] || dealById(id));
+const idLink = id => exists(id) ? `<a class="idlink" href="#${id.toLowerCase()}">${id}</a>` : id;
+/* escape text, then turn any known RFQ / quote / deal number into a link */
+const linkify = s => esc(s).replace(ID_RE, m => idLink(m));
+const ICON = {
+  rfq: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h8l4 4v14H6z"/><path d="M9 11h6M9 15h6"/></svg>',
+  quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/></svg>',
+  ship: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h18l-2 4H5zM6 15V9h12v6"/></svg>',
+  back: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg>',
+  go: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg>',
+  check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>',
+  pen: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  lock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  warn: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+};
+function linkChips(deal) {
+  const rs = dealRfqs(deal);
+  const out = rs.map(r => `<a class="chip rfq" href="#${r.toLowerCase()}" title="Open ${r}">${ICON.rfq}${r}</a>`);
+  dealQuotes(deal).forEach(q => out.push(`<a class="chip quote" href="#${q.toLowerCase()}" title="Open ${q}">${ICON.quote}${q}</a>`));
+  return out.join('');
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function addHistory(dealId, ev) { (history[dealId] = history[dealId] || []).unshift({ at: nowIso(), by: 'NM', ...ev }); }
+
+/* ---------- routing ---------- */
+const ui = { tab: 'pipeline', view: 'board', q: '', owner: '', status: '', date: '' };
+function go(hash) { if (location.hash.slice(1) === hash) render(); else location.hash = hash; }
+function back() { if (navStack.length > 1) history_back(); else go('pipeline'); }
+const navStack = [];
+function history_back() { navStack.pop(); const prev = navStack.pop(); go(prev || 'pipeline'); }
+window.addEventListener('hashchange', render);
+document.addEventListener('click', e => {
+  if (e.target.closest('a[href^="#"]')) return; /* plain links route through the hash */
+  const g = e.target.closest('[data-go]');
+  if (g) { e.stopPropagation(); go(g.dataset.go); }
+});
+
+function render() {
+  const h = (location.hash.slice(1) || 'pipeline').toLowerCase();
+  if (navStack[navStack.length - 1] !== h) navStack.push(h);
+  const id = h.toUpperCase();
+  const v = $('#view');
+  const fin = h === 'finance' || h.startsWith('review-');
+  paintChrome(fin);
+  if (h === 'finance') { v.innerHTML = financeView(); bindFinance(); }
+  else if (h.startsWith('review-') && reviews[id.slice(7)] && dealById(id.slice(7))) { markOpened(id.slice(7)); v.innerHTML = reviewView(dealById(id.slice(7))); bindReview(); }
+  else if (h.startsWith('op-') && dealById(id)) v.innerHTML = dealView(dealById(id));
+  else if (h.startsWith('rfq-') && rfqs[id]) v.innerHTML = rfqView(rfqs[id]);
+  else if (h.startsWith('q-') && quotes[id]) v.innerHTML = quoteView(quotes[id]);
+  else { v.innerHTML = pipelineView(); bindPipeline(); }
+  window.scrollTo(0, 0);
+}
+
+/* ---------- chrome: rail, top bar, notifications ---------- */
+const BELL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0"/></svg>';
+let bellOpen = false;
+function paintChrome(fin) {
+  $('#r-crm').classList.toggle('on', !fin); $('#r-fin').classList.toggle('on', fin);
+  $('#tb-pill').textContent = fin ? 'Finance' : 'CRM';
+  $('#tb-h').textContent = fin ? 'Customer profile reviews' : 'CRM';
+  paintBell();
+}
+function paintBell() {
+  const un = notifs.filter(n => !n.read).length;
+  $('#bellw').innerHTML = `<button class="bell" onclick="toggleBell(event)" aria-label="Notifications${un ? `, ${un} unread` : ''}" aria-expanded="${bellOpen}">${BELL}${un ? `<span class="dot">${un}</span>` : ''}</button>
+    ${bellOpen ? `<div class="npanel" role="dialog" aria-label="Notifications"><div class="nh">Notifications <span style="font-size:12px;color:var(--muted);font-weight:400">To sales owners</span></div>
+      <div class="nl">${notifs.map((n, i) => `<button class="ni ${n.read ? '' : 'unread'} ${n.kind === 'warn' ? 'warn' : ''}" onclick="openNotif(${i})">
+        <span class="ic">${n.kind === 'warn' ? ICON.warn : ICON.check}</span>
+        <span><b>${esc(n.t)}</b><p>${esc(n.p)}</p><small>To ${OWNERS[n.to].name} · ${longD(n.at)} · ${time(n.at)}</small></span></button>`).join('') || '<div class="ni-empty">No notifications yet</div>'}</div></div>` : ''}`;
+}
+function toggleBell(e) { e.stopPropagation(); bellOpen = !bellOpen; paintBell(); }
+function openNotif(i) { notifs[i].read = true; bellOpen = false; paintBell(); go(notifs[i].dealId.toLowerCase()); }
+document.addEventListener('click', e => { if (bellOpen && !e.target.closest('#bellw')) { bellOpen = false; paintBell(); } });
+function notify(n) { notifs.unshift({ at: nowIso(), read: false, ...n }); paintBell(); }
+
+/* ---------- pipeline ---------- */
+function filtered() {
+  const q = ui.q.trim().toLowerCase();
+  return deals.filter(x => {
+    if (ui.owner && x.owner !== ui.owner) return false;
+    if (ui.status === 'open' && x.stage === 'closed') return false;
+    if (ui.status === 'won' && x.outcome !== 'won') return false;
+    if (ui.status === 'lost' && x.outcome !== 'lost') return false;
+    if (ui.date && daysAgo(x.created) > +ui.date) return false;
+    if (q) {
+      const hay = [x.id, x.name, OWNERS[x.owner].name, x.contact, ...(x.rfqs || []), ...dealQuotes(x)].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function pipelineView() {
+  const open = deals.filter(x => x.stage !== 'closed');
+  const won = deals.filter(x => x.outcome === 'won');
+  const list = filtered();
+  return `
+  <div class="tabs" role="tablist">
+    <button class="tab on">◎ Pipeline</button>
+    <button class="tab" data-soon>Companies</button>
+    <button class="tab" data-soon>Contacts</button>
+  </div>
+  <div class="stats">
+    <div class="stat hl"><div class="lbl">Active pipeline (USD)</div><div class="val tnum">${money(open.reduce((a, x) => a + x.amount, 0))}</div><div class="sub">${open.length} deals in progress</div><span class="badge-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20h16M7 16v-5M12 16V7M17 16v-8"/></svg></span></div>
+    <div class="stat"><div class="lbl">Deals won (USD)</div><div class="val gold tnum">${money(won.reduce((a, x) => a + x.amount, 0))}</div><div class="sub">${won.length} deals won</div><span class="badge-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4h10v4a5 5 0 0 1-10 0zM12 13v4M8 20h8M7 6H4a3 3 0 0 0 3 3M17 6h3a3 3 0 0 1-3 3"/></svg></span></div>
+    <div class="stat"><div class="lbl">Total deals</div><div class="val tnum">${deals.length}</div><div class="sub">All-time deals</div><span class="badge-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg></span></div>
+  </div>
+  <div class="toolbar">
+    <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" placeholder="Search deals, deal ID, RFQ or quote number…" value="${esc(ui.q)}" aria-label="Search deals"></label>
+    <select class="sel" id="f-owner" aria-label="Owner"><option value="">All Owners</option>${Object.entries(OWNERS).map(([k, o]) => `<option value="${k}" ${ui.owner === k ? 'selected' : ''}>${o.name}</option>`).join('')}</select>
+    <select class="sel" id="f-status" aria-label="Status">${[['', 'All Statuses'], ['open', 'Open'], ['won', 'Won'], ['lost', 'Lost']].map(([v, l]) => `<option value="${v}" ${ui.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <select class="sel" id="f-date" aria-label="Date created">${[['', 'Date created'], ['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days']].map(([v, l]) => `<option value="${v}" ${ui.date === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <div class="seg"><button id="v-board" class="${ui.view === 'board' ? 'on' : ''}">Board</button><button id="v-list" class="${ui.view === 'list' ? 'on' : ''}">List</button></div>
+    <button class="btn primary" id="new-deal">+ New deal</button>
+  </div>
+  <div class="count">Showing <b>${list.length}</b> of ${deals.length} deals</div>
+  ${ui.view === 'board' ? boardHtml(list) : listHtml(list)}`;
+}
+function boardHtml(list) {
+  return `<div class="board-wrap"><div class="board">${STAGES.map((s, i) => {
+    const items = list.filter(x => x.stage === s.key);
+    const meta = s.key === 'closed'
+      ? `${items.filter(x => x.outcome === 'won').length} won · ${items.filter(x => x.outcome === 'lost').length} lost`
+      : `${items.length} · ${money(items.reduce((a, x) => a + x.amount, 0))}`;
+    return `<section class="col" data-stage="${s.key}">
+      <div class="col-h"><div class="t"><span class="n ${s.key === 'closed' ? 'dk' : ''}">${i + 1}</span>${s.label}</div><div class="m tnum">${meta}</div></div>
+      <div class="cards">${items.map(cardHtml).join('') || '<div class="empty-box">No deals here</div>'}</div>
+    </section>`;
+  }).join('')}</div></div>`;
+}
+function cardHtml(x) {
+  const chips = linkChips(x);
+  return `<div class="card" role="button" tabindex="0" draggable="true" data-id="${x.id}" data-go="${x.id.toLowerCase()}">
+    <div class="top">
+      <div class="did">${x.id}</div>
+      <div class="row1"><span class="nm">${esc(x.name)}</span><span class="amt tnum">${money(x.amount)}</span></div>
+      <div class="row2"><span class="owner">${av(x.owner)}${OWNERS[x.owner].name}</span><span class="cls ${x.cls}">${x.cls}</span></div>
+    </div>
+    <div class="bot"><span>Created ${dmy(x.created)}</span>${x.outcome ? `<span class="pill ${x.outcome}">${x.outcome === 'won' ? ICON.check + ' Won' : 'Lost'}</span>` : reviewPill(x.id)}</div>
+    ${chips ? `<div class="links">${chips}</div>` : ''}
+  </div>`;
+}
+function listHtml(list) {
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Deal ID</th><th>Company</th><th>Stage</th><th>Owner</th><th>Amount</th><th>Class</th><th>Linked RFQ / Quote</th><th>Created</th></tr></thead>
+    <tbody>${list.map(x => `<tr data-go="${x.id.toLowerCase()}">
+      <td><b>${x.id}</b></td><td>${esc(x.name)}</td>
+      <td>${x.stage === 'closed' ? `<span class="pill ${x.outcome}">${x.outcome === 'won' ? 'Won' : 'Lost'}</span>` : `<span class="pill stage">${stageLabel(x.stage)}</span>`}</td>
+      <td><span class="owner">${av(x.owner)}${OWNERS[x.owner].name}</span></td>
+      <td class="tnum" style="color:var(--gold);font-weight:600">${money(x.amount)}</td>
+      <td><span class="cls ${x.cls}">${x.cls}</span></td>
+      <td><div style="display:flex;gap:6px">${linkChips(x) || '<span style="color:var(--muted)">None</span>'}</div></td>
+      <td class="tnum">${dmy(x.created)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+/* Drag a card to another column. Entering Qualified sends the deal to Finance for review; it moves once Finance clears it. */
+function moveDeal(id, target) {
+  const x = dealById(id);
+  if (!x || target === x.stage) return;
+  if (target === 'closed') return closeDealModal(id);
+  if (needsKyc(x, target)) return sendFinanceModal(id, { name: x.name, amount: x.amount, cls: x.cls, stage: target });
+  applyStage(x, target);
+  toast(`${x.name} moved to ${stageLabel(target)}`); render();
+}
+function stageName(x) { return x.outcome ? (x.outcome === 'won' ? 'Won' : 'Lost') : stageLabel(x.stage); }
+function applyStage(x, target, comment, by) {
+  const before = stageName(x);
+  if (target === 'won' || target === 'lost') {
+    x.stage = 'closed'; x.outcome = target;
+    if (isPending(x.id)) reviews[x.id].status = 'withdrawn';
+    addHistory(x.id, { t: `Deal marked ${target === 'won' ? 'Won' : 'Lost'}`, tag: target === 'won' ? 'Won' : 'Lost', tagCls: target === 'won' ? 'won' : '', comment });
+  } else {
+    x.stage = target; delete x.outcome;
+    if (target === 'qualified' && readyForQ(x.id)) reviews[x.id].used = true;
+    addHistory(x.id, { t: `Moved deal from ${before} to ${stageLabel(target)}`, tag: stageLabel(target), comment, ...(by ? { by } : {}) });
+  }
+}
+function closeDealModal(id) {
+  const x = dealById(id);
+  modal(`<h3>Close ${esc(x.name)}</h3><p class="lead">${x.id} · How did this deal end?</p>
+    <div class="opts"><label class="opt"><input type="radio" name="cl" value="won" checked><div><b>Won</b><div>The customer accepted and is shipping with us</div></div></label>
+    <label class="opt"><input type="radio" name="cl" value="lost"><div><b>Lost</b><div>The customer went elsewhere or dropped the request</div></div></label></div>
+    <div class="field"><label for="cl-c">Comment</label><input id="cl-c" placeholder="Optional"></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn dark" onclick="doClose('${id}')">Close deal</button></div>`);
+}
+function doClose(id) {
+  const x = dealById(id), out = document.querySelector('input[name=cl]:checked').value;
+  if (out === 'won' && needsKyc(x, 'won')) {
+    return sendFinanceModal(id, { name: x.name, amount: x.amount, cls: x.cls, stage: 'won', comment: $('#cl-c').value.trim() || undefined });
+  }
+  applyStage(x, out, $('#cl-c').value.trim() || undefined);
+  closeModal(); toast(`${x.name} marked ${out === 'won' ? 'Won' : 'Lost'}`); render();
+}
+/* Touch screens: press and hold a card, then drag it to a column */
+function touchDrag(card) {
+  let timer, ghost, active = false, sx, sy;
+  const colAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest('.col'); };
+  const clear = () => { document.querySelectorAll('.col.over').forEach(c => c.classList.remove('over')); };
+  card.addEventListener('touchstart', e => {
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+    timer = setTimeout(() => {
+      active = true; card.classList.add('dragging');
+      const r = card.getBoundingClientRect();
+      ghost = card.cloneNode(true); ghost.className = 'card ghost';
+      Object.assign(ghost.style, { width: r.width + 'px', left: (sx - r.width / 2) + 'px', top: (sy - 30) + 'px' });
+      document.body.appendChild(ghost);
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch (_) {}
+    }, 350);
+  }, { passive: true });
+  card.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    if (!active) { if (Math.abs(t.clientX - sx) > 8 || Math.abs(t.clientY - sy) > 8) clearTimeout(timer); return; }
+    e.preventDefault();
+    ghost.style.left = (t.clientX - ghost.offsetWidth / 2) + 'px'; ghost.style.top = (t.clientY - 30) + 'px';
+    clear(); const c = colAt(t.clientX, t.clientY); if (c) c.classList.add('over');
+  }, { passive: false });
+  const end = e => {
+    clearTimeout(timer);
+    if (!active) return;
+    e.preventDefault();
+    const t = e.changedTouches[0]; const c = colAt(t.clientX, t.clientY);
+    active = false; card.classList.remove('dragging'); ghost.remove(); clear();
+    if (c) moveDeal(card.dataset.id, c.dataset.stage);
+  };
+  card.addEventListener('touchend', end); card.addEventListener('touchcancel', end);
+}
+function bindPipeline() {
+  const q = $('#q');
+  q.addEventListener('input', () => { ui.q = q.value; const pos = q.selectionStart; render(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); });
+  [['#f-owner', 'owner'], ['#f-status', 'status'], ['#f-date', 'date']].forEach(([s, k]) => $(s).addEventListener('change', e => { ui[k] = e.target.value; render(); }));
+  $('#v-board').onclick = () => { ui.view = 'board'; render(); };
+  $('#v-list').onclick = () => { ui.view = 'list'; render(); };
+  $('#new-deal').onclick = newDealModal;
+  document.querySelectorAll('[data-soon]').forEach(b => b.onclick = () => toast('Companies and Contacts are outside this prototype'));
+  document.querySelectorAll('.card').forEach(c => {
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target === c) go(c.dataset.go); });
+    c.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', c.dataset.id); e.dataTransfer.effectAllowed = 'move'; c.classList.add('dragging'); });
+    c.addEventListener('dragend', () => { c.classList.remove('dragging'); document.querySelectorAll('.col.over').forEach(x => x.classList.remove('over')); });
+  });
+  document.querySelectorAll('.card').forEach(touchDrag);
+  document.querySelectorAll('.col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; col.classList.add('over'); });
+    col.addEventListener('dragleave', e => { if (!col.contains(e.relatedTarget)) col.classList.remove('over'); });
+    col.addEventListener('drop', e => { e.preventDefault(); col.classList.remove('over'); moveDeal(e.dataTransfer.getData('text/plain'), col.dataset.stage); });
+  });
+}
+
+/* ---------- deal ---------- */
+function stageBadge(x) {
+  if (x.outcome === 'won') return `<span class="pill won">${ICON.check} Deal Won</span>`;
+  if (x.outcome === 'lost') return `<span class="pill lost">Deal Lost</span>`;
+  return `<span class="pill stage">${stageLabel(x.stage)}</span>`;
+}
+function dealView(x) {
+  const o = OWNERS[x.owner];
+  const ev = (history[x.id] || []).concat([{ t: 'Deal Created', at: x.created, created: true }]);
+  return `
+  <button class="back" onclick="back()">${ICON.back} Back to dashboard</button>
+  ${dealReviewCallout(x)}
+  <div class="panel" style="margin-bottom:20px">
+    <div class="head" style="margin:0">
+      <div><h2>${esc(x.name)}</h2><div class="ids"><span class="idtag">${x.id}</span>${stageBadge(x)}${x.outcome ? '' : reviewPill(x.id)}</div></div>
+      <button class="btn" onclick="editDealModal('${x.id}')">Edit ${ICON.pen}</button>
+    </div>
+  </div>
+  ${financeTracker(x)}
+  <div class="grid2">
+    <div class="stack">
+      <div class="panel">
+        <p class="sec-t">Deal information</p>
+        <div class="kv">
+          <div><div class="k">Deal</div><div class="v">${x.id}</div></div>
+          <div><div class="k">Deal amount</div><div class="v gold tnum">${money(x.amount)}</div></div>
+          <div><div class="k">Contact</div><div class="v">${esc(x.contact)}</div></div>
+          <div><div class="k">Date created</div><div class="v tnum">${slash(x.created)}</div></div>
+          <div><div class="k">Product</div><div class="v">${esc(x.product)}</div></div>
+          <div><div class="k">Class</div><div class="v"><span class="cls ${x.cls}" style="font-size:12px;padding:4px 12px">${x.cls}</span></div></div>
+          <div class="${linkedField(x) ? '' : 'full'}"><div class="k">Sales owner</div><div class="so"><span class="av">${x.owner}</span><div><b>${o.name}</b><small>${o.title}</small></div></div></div>
+          ${linkedField(x)}
+          <div class="full"><div class="k">Note</div><div class="note">${esc(x.note || 'No notes on this deal yet.')}</div></div>
+        </div>
+      </div>
+      ${kycPanel(x)}
+    </div>
+    <div class="panel">
+      <div class="lk-head" style="margin-bottom:20px"><p class="sec-t">Deal history</p><button class="btn primary" onclick="activityModal('${x.id}')">+ Add Activity</button></div>
+      <div class="hist">${ev.map(e => `<div class="ev">
+        <div class="r"><b>${esc(e.t)}</b>${e.tag ? `<span class="tag ${e.tagCls || ''}">${esc(e.tag)}</span>` : ''}</div>
+        <div class="meta">${e.created ? `${daysAgo(e.at)} days ago · ${time(e.at)}` : `${OWNERS[e.by].name} &nbsp;•&nbsp; ${longD(e.at)} · ${time(e.at)}`}</div>
+        ${e.comment ? `<div class="cm">Comment: ${esc(e.comment)}</div>` : ''}
+      </div>`).join('')}</div>
+    </div>
+  </div>`;
+}
+function rfqPill(r) { return `<span class="pill ${r.status === 'Quoted' ? 'quoted' : r.status === 'New' ? 'new' : 'quoting'}">${r.status}</span>`; }
+function quotePill(status) { return `<span class="pill ${status === 'Ready' ? 'ready' : 'await'}">${status}</span>`; }
+function linkedField(x) {
+  const rs = dealRfqs(x), qs = dealQuotes(x);
+  if (rs.length) return `<div><div class="k">RFQ</div><div class="v">${rs.map(idLink).join(', ')}</div></div>`;
+  if (qs.length) return `<div><div class="k">Quote</div><div class="v">${qs.map(idLink).join(', ')}</div></div>`;
+  return '';
+}
+
+/* ---------- RFQ ---------- */
+function dealLinkCard(dealId) {
+  const dl = dealById(dealId);
+  return `<a class="linkcard" href="#${dl.id.toLowerCase()}" style="text-decoration:none;color:inherit"><span class="so"><span class="av">${dl.owner}</span></span>
+    <span class="tx"><small><span class="idlink" style="color:var(--green);font-weight:600;text-decoration:underline;text-underline-offset:3px">${dl.id}</span> · ${stageLabel(dl.stage)}</small><b>${esc(dl.name)}</b></span><span class="tnum" style="color:var(--gold);font-weight:600">${money(dl.amount)}</span>${ICON.go}</a>`;
+}
+const fld = (k, v) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`;
+const CHEV = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg>';
+function containerFields(c, grid) {
+  return `<div class="${grid}">${fld('Class', esc(c.cls))}${fld('Commodity description', esc(c.commodity))}${fld('Container size', esc(c.size))}${fld('Container type', esc(c.type))}${fld('Count', c.count)}${fld('Weight (kg)', c.weight.toLocaleString('en-US'))}</div>`;
+}
+function rfqView(r) {
+  return `
+  <button class="back grey" onclick="back()">${ICON.back} Go Back</button>
+  <div class="grid2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
+    <div class="rfq-card">
+      <div class="hd"><div><div class="rfq-title"><h2>${r.id}</h2>${rfqPill(r)}</div><div class="subt">Request Details</div></div>
+        <button class="btn" onclick="toast('Editing RFQs is outside this prototype')">${ICON.pen} Edit RFQ</button></div>
+      <div class="bd">
+        <div class="f3">
+          ${fld('Service type', esc(r.service))}${fld('Company name', esc(r.customer))}${fld('Contact', esc(r.contact))}
+          ${fld('Port of loading', esc(r.origin))}${fld('Port of destination', esc(r.destination))}${fld('Total value of goods', esc(r.goodsValue))}
+          ${fld('BL number', esc(r.bl))}${fld('Branch', esc(r.branch))}${fld('Source', esc(r.source))}
+          ${fld('Incoterms', esc(r.incoterm))}${fld('Owner', OWNERS[r.owner].name)}${fld('Quote status', r.quoteStatus === 'Ready' ? quotePill('Ready') : esc(r.quoteStatus))}
+          ${fld('Documents', esc(r.documents))}${fld('Notes', esc(r.notes))}
+        </div>
+        <p class="h-sm">Container Details</p>
+        ${r.containers.map(c => `<details class="acc" open><summary>Container Details ${CHEV}</summary><div class="in">${containerFields(c, 'f3')}</div></details>`).join('')}
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <p class="sec-t">Linked deal</p>
+        ${r.dealId ? dealLinkCard(r.dealId) : `<div class="empty-box">No deal yet. The system links this RFQ to its deal automatically.</div>`}
+      </div>
+      <div class="panel">
+        <div class="lk-head" style="margin-bottom:16px"><p class="sec-t">Quotes on this RFQ</p><button class="btn sm" onclick="toast('Quote builder is outside this prototype')">+ Create quote</button></div>
+        ${r.quotes.length ? `<div class="tree">${r.quotes.map(qid => { const q = quotes[qid]; return `<div class="node quote"><div class="node-row"><span class="ic">${ICON.quote}</span>
+          <div class="tx">${idLink(q.id)} &nbsp;${quotePill(q.status)}<div>Issued ${longD(q.issued)}${q.dealId ? ` · deal ${idLink(q.dealId)}` : ''}</div></div><span class="amt tnum">${qMoney(q, quoteTotal(q))}</span></div></div>`; }).join('')}</div>`
+          : '<div class="empty-box">No quotes yet. The pricing team is working on this request.</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- quote ---------- */
+function quoteView(q) {
+  const r = rfqs[q.rfqId];
+  const dealId = q.dealId || r.dealId;
+  const dl = dealId && dealById(dealId);
+  return `
+  <button class="back grey" onclick="back()">${ICON.back} Go Back</button>
+  <div class="qwrap">
+    <aside class="qlist">
+      <div class="qh"><span>ALL QUOTES</span><button class="btn sm" onclick="toast('Search is outside this prototype')">⌕</button><button class="btn sm" onclick="toast('Filters are outside this prototype')">Filter</button><button class="btn sm primary" onclick="toast('Quote builder is outside this prototype')">+ New</button></div>
+      <div class="qtabs"><span class="on">All (69)</span><span>Draft (5)</span><span>Pending approval (0)</span></div>
+      <div class="shw">Showing 69 of 69 quotes</div>
+      ${QUOTE_LIST.map(it => `<button class="qi ${it.id === q.id ? 'on' : ''}" ${quotes[it.id] ? `data-go="${it.id.toLowerCase()}"` : `onclick="toast('${it.id} is not filled in this prototype')"`}>
+        <div class="a"><b>${it.id}</b>${quotePill(it.status)}</div><div class="c">${esc(it.co)}</div><div class="s">${esc(it.svc)}</div><div class="r">${esc(it.route)}</div><div class="r">${it.date}</div></button>`).join('')}
+    </aside>
+    <section class="qmain">
+      <div class="qbar"><div class="ttl"><b>${q.id}</b><span>${esc(r.customer)} · ${esc(r.routeShort)}</span></div>
+        <select id="q-status" aria-label="Quote status"><option>Ready</option><option>Draft</option><option>Pending approval</option><option>Awaiting Customer Decision</option><option>Accepted</option><option>Rejected</option></select>
+        <button class="btn" onclick="toast('PDF export is outside this prototype')">PDF</button></div>
+      <div class="qdoc"><div class="qpaper">
+        ${dl ? `<div class="dealstrip">${ICON.check}<span>Linked deal</span>${idLink(dl.id)}<span>· ${esc(dl.name)} · ${stageLabel(dl.stage)}</span></div>` : ''}
+        <div class="valid">Valid for ${q.validDays} days</div>
+        <div class="addr">Meydan Grandstand, 6th floor, Meydan Road, Nad Al Sheba, Dubai, U.A.E.</div>
+        <details open><summary style="list-style:none;cursor:pointer"><div class="bk-h"><b>Booking Details</b>${idLink(r.id)}<span style="margin-left:auto">${CHEV}</span></div></summary>
+          <div class="f4">
+            ${fld('Service type', esc(r.service))}${fld('Company name', `<b>${esc(r.customer)}</b>`)}${fld('Customer name', esc(r.contact))}${fld('Email address', esc(r.email))}
+            ${fld('Port of loading', esc(r.origin))}${fld('Port of destination', esc(r.destination))}${fld('Total value of goods', esc(r.goodsValue))}${fld('BL number', esc(r.bl))}
+            ${fld('Branch', esc(r.branch))}${fld('Source', esc(r.source))}${fld('Incoterms', esc(r.incoterm))}
+          </div>
+          ${r.containers.map(c => `<div class="cbox"><div class="t">CONTAINER DETAILS</div>${containerFields(c, 'f4')}</div>`).join('')}
+          ${fld('Notes', esc(r.notes))}
+        </details>
+        <div class="oc-t">OTHER CHARGES</div>
+        <div class="oc table-wrap" style="border:0"><table>
+          <thead><tr><th>Basis</th><th>Unit</th><th>20FT</th><th>Cost</th><th>Margin %</th><th>Sell</th><th>Description</th></tr></thead>
+          <tbody>${q.charges.map(c => `<tr style="cursor:default"><td style="color:var(--blue)">${esc(c.basis)}</td><td>${c.unit}</td><td>${c.ft20}</td><td class="tnum"><b>${qMoney(q, c.cost)}</b></td><td>${c.margin}</td><td class="tnum" style="color:var(--gold);font-weight:600">${qMoney(q, c.sell)}</td><td>${esc(c.desc)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div class="sub-t">Sub Total: <b class="tnum">${qMoney(q, quoteTotal(q))}</b></div>
+        <div class="redn">${ICON.warn}<span><b>NOTE:</b> Duty and tax advised are subject to verification and assessment by NCS upon arrival of cargo. 7.5% VAT will be applicable at the time of invoicing. Please note this offer is firm for acceptance within 48hours, otherwise above offer will be considered as invalid. Storage / detention / demurrage charges (if any) are as per receipted.</span></div>
+        <div class="terms-t">ONEPORT365 TERMS AND CONDITIONS</div>
+        <ol class="terms">
+          <li>All documents related to clearing shipments is to be provided by the CLIENT where we do not handle documentation.</li>
+          <li>CLIENT to ensure that all the details are correct and in order.</li>
+          <li>CLIENT ensures that all permits required for the Importation of their commodity are provided and valid at the time of Import.</li>
+          <li>The Goods imported are the same as the Goods declared on all Documents provided.</li>
+          <li>CLIENT to ensure timely payment of Duty.</li>
+          <li>CLIENT to offload SERVICE PROVIDER's Trucks within 24Hrs of arrival at Facility, Truck demurrage per day applies for delays@N30,000.</li>
+          <li>CLIENT to provide Delivery address accurately on the DATASHEET.</li>
+        </ol>
+      </div></div>
+    </section>
+  </div>`;
+}
+
+/* ---------- modals ---------- */
+function modal(html, cls = '') { $('#modal-root').innerHTML = `<div class="scrim" onclick="if(event.target===this)closeModal()"><div class="modal ${cls}" role="dialog" aria-modal="true">${html}</div></div>`; const f = $('#modal-root input, #modal-root select, #modal-root textarea'); if (f) f.focus(); }
+function closeModal() { $('#modal-root').innerHTML = ''; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function activityModal(dealId) {
+  modal(`<h3>Add activity</h3><p class="lead">${dealId}</p>
+    <div class="field"><label for="a-type">Activity</label><select id="a-type"><option>Call</option><option>Email</option><option>Meeting</option><option>Note</option></select></div>
+    <div class="field"><label for="a-c">Comment</label><textarea id="a-c" placeholder="What happened?"></textarea></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn dark" onclick="saveActivity('${dealId}')">Save activity</button></div>`);
+}
+function saveActivity(dealId) {
+  const t = $('#a-type').value, c = $('#a-c').value.trim();
+  addHistory(dealId, { t: `${t} logged`, tag: t, comment: c || undefined });
+  closeModal(); toast('Activity saved'); render();
+}
+function editDealModal(dealId) {
+  const x = dealById(dealId);
+  const cur = x.outcome ? x.outcome : x.stage;
+  const opts = [...STAGES.filter(s => s.key !== 'closed').map(s => [s.key, s.label]), ['won', 'Closed · Won'], ['lost', 'Closed · Lost']];
+  modal(`<h3>Edit deal</h3><p class="lead">${x.id}</p>
+    <div class="field"><label for="e-n">Company</label><input id="e-n" value="${esc(x.name)}"></div>
+    <div class="frow"><div class="field"><label for="e-a">Amount (USD)</label><input id="e-a" type="number" min="0" value="${x.amount}"></div>
+    <div class="field"><label for="e-c">Class</label><select id="e-c">${['SME', 'Growth', 'Enterprise'].map(c => `<option ${c === x.cls ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div>
+    <div class="field"><label for="e-s">Stage</label><select id="e-s">${opts.map(([k, l]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div id="e-err"></div>
+    <div class="field"><label for="e-cm">Comment</label><input id="e-cm" placeholder="Why is this changing?"></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn dark" id="e-save" onclick="saveDeal('${x.id}')">Save changes</button></div>`);
+  const chk = () => {
+    const s = $('#e-s').value, kycNext = needsKyc(x, s);
+    const held = false;
+    $('#e-err').innerHTML = held ? `<div class="callout">${ICON.warn}<span>This deal is with Finance for review. It moves to Qualified when Finance clears it.</span></div>`
+      : kycNext ? `<div class="callout ok">${ICON.check}<span>Next you'll tick the customer classification and email the customer profile to Finance. Finance completes the rest of the checklist and notifies you when the deal is ready to move to Qualified.</span></div>` : '';
+    $('#e-save').textContent = kycNext && !held ? 'Continue' : 'Save changes';
+    $('#e-save').disabled = held;
+  };
+  $('#e-s').addEventListener('change', chk); chk();
+}
+function saveDeal(dealId) {
+  const x = dealById(dealId);
+  const s = $('#e-s').value;
+  if (needsKyc(x, s)) {
+    const pending = { name: $('#e-n').value.trim() || x.name, amount: Math.max(0, +$('#e-a').value || 0), cls: $('#e-c').value, comment: $('#e-cm').value.trim() || undefined, stage: s };
+    return sendFinanceModal(x.id, pending);
+  }
+  const before = x.outcome ? (x.outcome === 'won' ? 'Won' : 'Lost') : stageLabel(x.stage);
+  x.name = $('#e-n').value.trim() || x.name; x.amount = Math.max(0, +$('#e-a').value || 0); x.cls = $('#e-c').value;
+  const cm = $('#e-cm').value.trim() || undefined;
+  if (s === 'won' || s === 'lost') {
+    if (x.outcome !== s) { x.stage = 'closed'; x.outcome = s; addHistory(x.id, { t: `Deal marked ${s === 'won' ? 'Won' : 'Lost'}`, tag: s === 'won' ? 'Won' : 'Lost', tagCls: s === 'won' ? 'won' : '', comment: cm }); }
+  } else if (s !== x.stage || x.outcome) {
+    x.stage = s; delete x.outcome; addHistory(x.id, { t: `Moved deal from ${before} to ${stageLabel(s)}`, tag: stageLabel(s), comment: cm });
+  }
+  closeModal(); toast('Deal updated'); render();
+}
+/* ---------- Customer Payment Terms: Qualifying Checklist (completed by Finance) ---------- */
+const KYC_SECTIONS = [
+  { t: 'Customer classification', h: 'A. Customer classification', hint: 'Tick one', q: [
+    { id: 'cls', one: 1, opts: [
+      { v: 'new', b: 'New customer:', t: 'Cash Before Service (full payment before service)' },
+      { v: 'adv', b: 'Existing Advance Payment customer:', t: 'minimum 90% paid upfront before service' },
+      { v: 'credit', b: 'Credit customer:', t: 'credit assessment completed <b>and</b> formal approval obtained from Internal Control or written approval from the CEO' },
+    ] },
+  ] },
+  { t: 'Onboarding requirements', h: 'B. Onboarding requirements', hint: 'Tick all', q: [
+    { id: 'onb', all: 1, opts: [
+      { v: 'framework', t: 'Proposed payment terms align with the approved payment framework' },
+      { v: 'wc', t: 'Finance has reviewed working capital and cash-flow impact' },
+      { v: 'dd', t: 'Internal Control has completed customer due diligence and credit assessment (credit customers only)', creditOnly: 1 },
+      { v: 'deviation', t: 'Any deviation from standard terms identified and escalated for CEO approval' },
+      { v: 'documented', t: 'Payment terms documented, approved and shared with all relevant stakeholders' },
+    ] },
+  ] },
+  { t: 'Clearance', h: 'C. Clearance', q: [
+    { id: 'clr', all: 1, opts: [{ v: 'clear', t: 'All applicable boxes above are ticked. Service may proceed.' }] },
+  ] },
+];
+const KYC_Q = KYC_SECTIONS.flatMap(s => s.q);
+const optText = o => o.b ? `<b>${esc(o.b)}</b> ${o.t}` : esc(o.t).replace('(credit customers only)', '<i>(credit customers only)</i>');
+const LATER = ['qualified', 'quote', 'won'];
+/* Every move into Qualified goes to Finance, and so does a deal that skips past Qualified without a cleared review */
+function needsKyc(x, target) {
+  if (target === 'qualified') return (x.stage !== 'qualified' || !!x.outcome) && !readyForQ(x.id);
+  return LATER.includes(target) && (reviews[x.id] || {}).status !== 'cleared' && ['prospect', 'contacted'].includes(x.stage) && !x.outcome;
+}
+const has = (a, id, v) => (a[id] || []).includes(v);
+const isCredit = a => has(a, 'cls', 'credit');
+const CLS_LABEL = { new: 'New customer · Cash Before Service', adv: 'Existing Advance Payment customer · min. 90% upfront', credit: 'Credit customer · approved credit terms' };
+function reviewPill(id) {
+  const r = reviews[id];
+  if (!r) return '';
+  if (r.status === 'pending') return `<span class="pill review">${r.openedAt ? 'Under Finance review' : 'Sent to Finance'}</span>`;
+  if (r.status === 'returned') return '<span class="pill back">Sent back by Finance</span>';
+  if (readyForQ(id)) return `<span class="pill pass">${ICON.check} Ready for Qualified</span>`;
+  return '';
+}
+function statusPill(r) {
+  if (r.status === 'cleared') return `<span class="pill pass">${ICON.check} Cleared</span>`;
+  if (r.status === 'returned') return '<span class="pill back">Sent back to sales</span>';
+  return '<span class="pill review">Awaiting review</span>';
+}
+
+/* Sales picks the customer classification (checklist step A), then the customer profile is emailed to Finance */
+const FINANCE_MAIL = 'Nkechim@oneport365.com, okpanachia@oneport365.com';
+function sendFinanceModal(dealId, pending) {
+  const x = dealById(dealId), r = reviews[dealId] || {};
+  window._pending = pending || {};
+  const a = { cls: r.terms ? [r.terms] : [] };
+  modal(`<div class="mh"><h3>Customer Payment Terms · Qualifying Checklist</h3>
+      <p class="lead">${esc(x.name)} · ${x.id}<br><i>Complete before any payment terms are agreed or communicated to the customer.</i></p>
+      <div class="kprog" aria-hidden="true"><span class="on" id="sf-p1"></span><span></span><span></span></div>
+      <div class="kstep-l" id="sf-l">Step 1 of 3 · Customer classification</div></div>
+    <div class="mb">
+      <div class="kyc-sec" id="sf-s1"><h4>${KYC_SECTIONS[0].h} <small>(tick one)</small></h4>${kycField(KYC_SECTIONS[0].q[0], a)}
+        ${r.status === 'pending' ? `<div class="callout" style="margin:0 0 12px">${ICON.warn}<span>Already with Finance since ${longD(r.sentAt)}. Sending again updates the request and emails Finance.</span></div>` : ''}
+        <p class="sf-hint">Steps 2 and 3 are completed by Finance. Once you tick one, the customer profile is emailed to Finance to review.</p></div>
+      <div class="kyc-sec" id="sf-s2" hidden></div>
+    </div>
+    <div class="mf">
+      <button class="btn" id="sf-back" onclick="sfBack()">Cancel</button>
+      <button class="btn dark" id="sf-next" onclick="sfNext('${dealId}')">Next</button>
+      <div id="sf-err" style="flex-basis:100%"></div>
+    </div>`, 'wide');
+  $('.mf #sf-back').style.marginLeft = 'auto';
+}
+function sfBack() {
+  if ($('#sf-s2').hidden) return closeModal();
+  $('#sf-s2').hidden = true; $('#sf-s1').hidden = false;
+  $('#sf-l').textContent = 'Step 1 of 3 · Customer classification';
+  $('#sf-back').textContent = 'Cancel'; $('#sf-next').textContent = 'Next'; $('#sf-err').innerHTML = '';
+}
+const sfCls = () => { const el = document.querySelector('input[name="k-cls"]:checked'); return el && el.value; };
+function sfNext(dealId) {
+  if (!$('#sf-s2').hidden) return sendFinance(dealId);
+  const cls = sfCls();
+  if (!cls) { $('[data-q="cls"]').classList.add('bad'); $('#sf-err').innerHTML = '<p class="err" style="margin:0">Tick one customer classification to continue.</p>'; return; }
+  const x = dealById(dealId), p = window._pending || {}, c = companyOf(x), ct = contactOf(x), r = reviews[dealId] || {};
+  const row = (k, v) => `<tr><th>${k}</th><td>${v || '<span style="color:var(--muted)">Not on file</span>'}</td></tr>`;
+  $('#sf-s2').innerHTML = `<h4>Email to Finance</h4>
+    <div class="mail">
+      <div class="mail-b">
+        <table class="mail-t"><tbody>
+          ${row('Company', esc(p.name || x.name))}
+          ${row('Industry', esc(c.industry))}
+          ${row('RC number', esc(c.rc))}
+          ${row('Contact', esc(x.contact) + (ct.role ? ` · ${esc(ct.role)}` : ''))}
+          ${row('Email', esc(ct.email))}
+          ${row('Phone', esc(ct.phone))}
+          ${row('Product', esc(x.product))}
+          ${row('Deal amount', money(p.amount ?? x.amount))}
+          ${row('Route', esc(x.route))}
+          ${row('Classification', `<b>${esc(CLS_LABEL[cls])}</b> (selected by sales)`)}
+        </tbody></table>
+        <span class="mail-btn">Open customer profile review</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:14px"><label for="sf-n">Note to Finance (optional)</label><textarea id="sf-n" placeholder="Anything Finance should know about this customer">${esc(r.note || '')}</textarea></div>`;
+  $('#sf-s1').hidden = true; $('#sf-s2').hidden = false;
+  $('#sf-l').textContent = 'Send customer profile to Finance';
+  $('#sf-back').textContent = 'Back'; $('#sf-next').textContent = 'Send email to Finance'; $('#sf-err').innerHTML = '';
+  $('.modal.wide').scrollTop = 0;
+}
+function sendFinance(dealId) {
+  const cls = sfCls();
+  const x = dealById(dealId), p = window._pending || {}, prev = reviews[dealId];
+  Object.assign(x, { name: p.name ?? x.name, amount: p.amount ?? x.amount, cls: p.cls ?? x.cls });
+  reviews[dealId] = { status: 'pending', a: prev && prev.a, sentBy: 'NM', sentAt: nowIso(), from: stageName(x),
+    terms: cls, note: $('#sf-n').value.trim(), mailedTo: FINANCE_MAIL };
+  addHistory(dealId, { t: 'Customer profile emailed to Finance for review', tag: 'Finance review', comment: `Classification: ${CLS_LABEL[cls]}${p.comment ? ` · ${p.comment}` : ''}` });
+  window._pending = null;
+  closeModal(); toast(`Email sent to Finance · you'll be notified when ${x.name} is ready for Qualified`); render();
+}
+
+/* ---- Finance: queue of customer profiles to review ---- */
+ui.ftab = 'pending';
+function financeView() {
+  const rows = Object.entries(reviews).map(([id, r]) => ({ x: dealById(id), r })).filter(o => o.x && o.r.status !== 'withdrawn');
+  const by = st => rows.filter(o => o.r.status === st);
+  const tabs = [['pending', 'Awaiting review'], ['cleared', 'Cleared'], ['returned', 'Sent back']];
+  const list = by(ui.ftab).sort((a, b) => (b.r.reviewedAt || b.r.sentAt).localeCompare(a.r.reviewedAt || a.r.sentAt));
+  const pend = by('pending');
+  const oldest = pend.length ? Math.max(...pend.map(o => daysAgo(o.r.sentAt))) : 0;
+  return `
+  <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button class="tab ${ui.ftab === k ? 'on' : ''}" data-ft="${k}" role="tab" aria-selected="${ui.ftab === k}">${l}<span class="cnt">${by(k).length}</span></button>`).join('')}</div>
+  <div class="stats">
+    <div class="stat hl"><div class="lbl">Awaiting finance review</div><div class="val tnum">${pend.length}</div><div class="sub">${pend.length ? (oldest ? `Oldest sent ${oldest} day${oldest === 1 ? '' : 's'} ago` : 'All sent today') : 'Nothing waiting'}</div><span class="badge-ico">${ICON.warn}</span></div>
+    <div class="stat"><div class="lbl">Deal value awaiting review (USD)</div><div class="val gold tnum">${money(pend.reduce((a, o) => a + o.x.amount, 0))}</div><div class="sub">Held before Qualified</div><span class="badge-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3H15"/></svg></span></div>
+    <div class="stat"><div class="lbl">Cleared by Finance</div><div class="val tnum">${by('cleared').length}</div><div class="sub">Sales notified each one is ready for Qualified</div><span class="badge-ico">${ICON.check}</span></div>
+  </div>
+  <div class="count">${ui.ftab === 'pending' ? 'Customer profiles sales has sent for review. Open one to check the profile and complete steps B and C of the payment terms checklist.' : ui.ftab === 'cleared' ? 'Deals Finance has cleared. Sales was notified that each one is ready to move to Qualified.' : 'Deals Finance sent back to sales for more information.'}</div>
+  ${list.length ? `<div class="table-wrap"><table>
+    <thead><tr><th>Deal</th><th>Company</th><th>Contact</th><th>Product</th><th>Amount</th><th>Requested terms</th><th>Sales owner</th><th>${ui.ftab === 'pending' ? 'Sent to Finance' : 'Reviewed'}</th><th>Status</th></tr></thead>
+    <tbody>${list.map(({ x, r }) => `<tr data-go="review-${x.id.toLowerCase()}" tabindex="0">
+      <td><b>${x.id}</b></td><td>${esc(x.name)}</td><td>${esc(x.contact)}</td><td>${esc(x.product)}</td>
+      <td class="tnum" style="color:var(--gold);font-weight:600">${money(x.amount)}</td>
+      <td>${r.terms ? TERMS[r.terms].t : '—'}</td>
+      <td><span class="owner">${av(x.owner)}${OWNERS[x.owner].name}</span></td>
+      <td class="tnum">${dmy(r.reviewedAt || r.sentAt)} · ${time(r.reviewedAt || r.sentAt)}</td>
+      <td>${statusPill(r)}</td></tr>`).join('')}</tbody></table></div>`
+    : `<div class="empty-box">${ui.ftab === 'pending' ? 'Nothing awaiting review. Deals appear here when sales moves them into Qualified.' : 'No deals here yet.'}</div>`}`;
+}
+function bindFinance() {
+  document.querySelectorAll('[data-ft]').forEach(b => b.onclick = () => { ui.ftab = b.dataset.ft; render(); });
+  document.querySelectorAll('tr[data-go]').forEach(tr => tr.addEventListener('keydown', e => { if (e.key === 'Enter') go(tr.dataset.go); }));
+}
+
+/* ---- Finance: customer profile review page ---- */
+const kvi = (k, v, full) => `<div class="${full ? 'full' : ''}"><div class="k">${k}</div><div class="v">${v || '<span style="color:var(--muted)">Not on file</span>'}</div></div>`;
+const secH = (ic, t) => `<div class="sec-h"><span class="ic">${ic}</span><p class="sec-t">${t}</p></div>`;
+const IC = {
+  co: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5l8-2v18M12 8h8v13M8 8v.5M8 12v.5M8 16v.5M16 12v.5M16 16v.5M2 21h20"/></svg>',
+  ct: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+  pr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+};
+function reviewView(x) {
+  const r = reviews[x.id], c = companyOf(x), ct = contactOf(x), o = OWNERS[x.owner];
+  const past = deals.filter(d => d.name === x.name && d.id !== x.id), won = past.filter(d => d.outcome === 'won');
+  const hist = past.length ? `${past.length} other deal${past.length === 1 ? '' : 's'} · ${won.length} won${won.length ? ` (${money(won.reduce((a, d) => a + d.amount, 0))})` : ''}` : 'No previous deals with OnePort365';
+  const linked = [...dealRfqs(x), ...dealQuotes(x)];
+  return `
+  <button class="back" onclick="go('finance')">${ICON.back} Back to customer reviews</button>
+  <div class="panel" style="margin-bottom:20px">
+    <div class="head" style="margin:0">
+      <div><h2>${esc(x.name)}</h2>
+        <div class="ids"><span class="idtag">${x.id}</span>${statusPill(r)}<span class="cls ${x.cls}">${x.cls}</span></div>
+        <div class="rv-meta"><span>Sent by <b>${OWNERS[r.sentBy].name}</b> · ${longD(r.sentAt)} · ${time(r.sentAt)}</span><span>Moving from ${esc(r.from)} to Qualified</span>${r.mailedTo ? `<span>Emailed to ${esc(r.mailedTo)}</span>` : ''}
+          ${r.reviewedAt ? `<span>${r.status === 'cleared' ? 'Cleared' : 'Sent back'} by <b>${OWNERS[r.reviewedBy].name}</b> · ${longD(r.reviewedAt)}</span>` : ''}</div></div>
+      <div class="rv-acts"><a class="btn" href="#${x.id.toLowerCase()}">Open deal ${ICON.go}</a>${r.status === 'pending' ? `<button class="btn" onclick="returnModal('${x.id}')">Send back to sales</button>` : ''}</div>
+    </div>
+    ${r.note ? `<div class="note" style="min-height:0;margin-top:18px"><b style="color:var(--ink);font-weight:600">Note from sales:</b> ${esc(r.note)}</div>` : ''}
+  </div>
+  <div class="grid2">
+    <div class="stack">
+      <div class="panel">${secH(IC.co, 'Company profile')}
+        <div class="kv">
+          ${kvi('Company name', esc(x.name), 1)}
+          ${kvi('Industry', esc(c.industry))}
+          ${kvi('Customer class', `<span class="cls ${x.cls}" style="font-size:12px;padding:4px 12px">${x.cls}</span>`)}
+          ${kvi('RC number', esc(c.rc))}
+          ${kvi('Tax ID (TIN)', esc(c.tin))}
+          ${kvi('Registered address', esc(c.address), 1)}
+          ${kvi('Website', c.web ? `<a href="https://${esc(c.web)}" target="_blank" rel="noopener">${esc(c.web)}</a>` : '')}
+          ${kvi('Customer history', esc(hist))}
+        </div></div>
+      <div class="panel">${secH(IC.ct, 'Contact details')}
+        <div class="kv">
+          ${kvi('Contact person', esc(x.contact))}
+          ${kvi('Role', esc(ct.role))}
+          ${kvi('Email', ct.email ? `<a href="mailto:${esc(ct.email)}">${esc(ct.email)}</a>` : '')}
+          ${kvi('Phone', ct.phone ? `<a href="tel:${esc(ct.phone.replace(/\s/g, ''))}">${esc(ct.phone)}</a>` : '')}
+          <div class="full"><div class="k">Sales owner</div><div class="so"><span class="av">${x.owner}</span><div><b>${o.name}</b><small>${o.title}</small></div></div></div>
+        </div></div>
+      <div class="panel">${secH(IC.pr, 'Product details')}
+        <div class="kv">
+          ${kvi('Product', esc(x.product))}
+          ${kvi('Deal amount', `<span style="color:var(--gold);font-weight:600" class="tnum">${money(x.amount)}</span>`)}
+          ${kvi('Route', esc(x.route), 1)}
+          ${kvi('Commodity', esc(x.commodity))}
+          ${kvi('Expected volume', esc(x.volume))}
+          ${kvi('Requested payment terms', r.terms ? `<b style="font-weight:600">${TERMS[r.terms].t}</b>${r.termsNote ? ` · ${esc(r.termsNote)}` : ''}<div style="font-size:12.5px;color:var(--ink-2);margin-top:2px">${TERMS[r.terms].d}</div>` : '', 1)}
+          ${linked.length ? kvi('Linked RFQ / quote', linked.map(idLink).join(', '), 1) : ''}
+        </div></div>
+    </div>
+    ${checklistPanel(x, r)}
+  </div>`;
+}
+function checklistPanel(x, r) {
+  const head = `<div class="ckh"><h3>Customer Payment Terms · Qualifying Checklist</h3><p class="lead"><i>Complete before any payment terms are agreed or communicated to the customer.</i></p>`;
+  if (r.status === 'cleared') return `<div class="panel ck-panel">${head}</div>
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 4px"><span class="pill pass">${ICON.check} Cleared · sales notified${r.used ? '' : ': ready for Qualified'}</span><span style="font-size:12px;color:var(--muted)">${OWNERS[r.reviewedBy].name} · ${longD(r.reviewedAt)} · ${time(r.reviewedAt)}</span></div>
+    ${checklistSummary(r.a)}</div>`;
+  if (r.status === 'returned') return `<div class="panel ck-panel">${head}</div>
+    <div class="callout bad" style="margin:18px 0 0">${ICON.warn}<span><b>Sent back to sales:</b> ${esc(r.comment)}<br>The checklist reopens here when sales sends the deal again.</span></div></div>`;
+  const a = { ...(r.a || {}), ...(r.terms ? { cls: [r.terms] } : {}), clr: [] };
+  const A = KYC_SECTIONS[0];
+  return `<div class="panel ck-panel">${head}
+      <div class="kprog" aria-hidden="true">${FIN_STEPS.map((_, i) => `<span data-p="${i}"></span>`).join('')}</div>
+      <div class="kstep-l" id="k-stepl"></div></div>
+    <div class="kyc-sec locked"><h4>${A.h} <small>· completed by sales</small><span class="lock">${ICON.lock} Read only</span></h4>
+      <div class="ticks">${A.q[0].opts.map((o, i) => has(a, 'cls', o.v) ? `<label class="tick">
+        <input type="checkbox" id="k-cls-${i}" name="k-cls" value="${o.v}" checked disabled><span>${optText(o)}</span></label>` : '').join('')}</div>
+      <p class="sf-hint">Selected by ${OWNERS[r.sentBy].name}. To change it, send the deal back to sales.</p></div>
+    <div class="ckb">${FIN_STEPS.map((si, i) => { const sec = KYC_SECTIONS[si]; return `<div class="kyc-sec" data-step="${i}" hidden><h4>${sec.h}${sec.hint ? ` <small>(${sec.hint.toLowerCase()})</small>` : ''}</h4>
+      ${sec.q.map(q => kycField(q, a)).join('')}</div>`; }).join('')}</div>
+    <div class="ckf">
+      <button class="btn" id="k-back" onclick="kycGo(-1)">Back</button>
+      <button class="btn dark" id="k-next" onclick="kycGo(1, '${x.id}')">Next</button>
+      <div id="k-err" style="flex-basis:100%"></div>
+    </div></div>`;
+}
+function checklistSummary(a) {
+  return `<div class="kv" style="margin-top:14px"><div class="full"><div class="k">Customer classification</div><div class="v">${esc(CLS_LABEL[a.cls[0]])}</div></div></div>
+    ${KYC_SECTIONS.map(sec => `<div class="kyc-grp"><b>${sec.h}</b><ul>${sec.q.flatMap(q => q.opts.filter(o => q.id !== 'cls' || has(a, 'cls', o.v)).map(o => {
+      const na = o.creditOnly && !isCredit(a), on = has(a, q.id, o.v);
+      return `<li class="${on ? 'on' : ''}"><span class="bx">${on ? ICON.check : ''}</span><span>${optText(o)}${na ? ' · not applicable' : ''}</span></li>`;
+    })).join('')}</ul></div>`).join('')}`;
+}
+function bindReview() { if ($('#k-next')) { kycNa(); kycShow(0, false); } }
+function kycField(q, a) {
+  return `<div class="field full" data-q="${q.id}"><div class="ticks" role="group">${q.opts.map((o, i) => `<label class="tick" data-v="${o.v}">
+      <input type="checkbox" id="k-${q.id}-${i}" name="k-${q.id}" value="${o.v}" ${has(a, q.id, o.v) ? 'checked' : ''} ${q.one ? `onchange="kycOne(this)"` : ''}${q.id === 'onb' ? ` onchange="kycNa()"` : ''}>
+      <span>${optText(o)}${o.creditOnly ? '<em class="na">Not applicable: customer is not a credit customer</em>' : ''}</span></label>`).join('')}</div></div>`;
+}
+/* Section A: only one classification can be ticked */
+function kycOne(el) {
+  if (el.checked) document.querySelectorAll(`input[name="${el.name}"]`).forEach(i => { if (i !== el) i.checked = false; });
+  const f = el.closest('.field'); if (f) f.classList.remove('bad');
+  const e = document.querySelector('#sf-err'); if (e) e.innerHTML = '';
+  kycNa();
+}
+/* The credit-only requirement is greyed out unless the customer is a credit customer */
+function kycNa() {
+  const credit = !!document.querySelector('input[name="k-cls"][value="credit"]:checked');
+  const row = document.querySelector('.tick[data-v="dd"]');
+  if (!row) return;
+  row.classList.toggle('off', !credit);
+  const box = row.querySelector('input'); box.disabled = !credit; if (!credit) box.checked = false;
+}
+let kycStep = 0;
+/* Finance completes sections B and C; section A is the sales selection, shown read only */
+const FIN_STEPS = [1, 2];
+function kycShow(i, focus = true) {
+  const n = FIN_STEPS.length;
+  kycStep = i;
+  document.querySelectorAll('[data-step]').forEach(el => el.hidden = +el.dataset.step !== i);
+  document.querySelectorAll('[data-p]').forEach(el => el.className = +el.dataset.p < i ? 'done' : +el.dataset.p === i ? 'on' : '');
+  $('#k-stepl').textContent = `Finance step ${i + 1} of ${n} · ${KYC_SECTIONS[FIN_STEPS[i]].t}`;
+  $('#k-back').hidden = i === 0;
+  $('#k-next').textContent = i < n - 1 ? 'Next' : 'Clear and notify sales';
+  if (!focus) return;
+  $('#k-err').innerHTML = '';
+  if (focus) { const first = $(`[data-step="${i}"] input`); if (first) first.focus({ preventScroll: true }); $('.ck-panel').scrollIntoView({ block: 'nearest' }); }
+}
+/* Next checks only the current step; the last step clears the deal */
+function kycGo(dir, dealId) {
+  if (dir < 0) { if (kycStep > 0) kycShow(kycStep - 1); return; }
+  const sec = KYC_SECTIONS[FIN_STEPS[kycStep]];
+  const a = readKyc();
+  document.querySelectorAll('.field.bad').forEach(f => f.classList.remove('bad'));
+  let msg = '';
+  sec.q.forEach(q => {
+    const need = q.opts.filter(o => !(o.creditOnly && !isCredit(a))).map(o => o.v);
+    const got = a[q.id];
+    if (q.one && got.length !== 1) msg = 'Tick one customer classification to continue.';
+    if (q.all && need.some(v => !got.includes(v))) msg = q.id === 'clr' ? 'Tick the clearance box to confirm service may proceed.' : `Tick all ${need.length} applicable requirements to continue. ${need.length - need.filter(v => got.includes(v)).length} still unticked.`;
+    if (msg) $(`[data-q="${q.id}"]`).classList.add('bad');
+  });
+  if (msg) { $('#k-err').innerHTML = `<p class="err" style="margin:0">${msg}</p>`; return; }
+  if (kycStep < FIN_STEPS.length - 1) kycShow(kycStep + 1); else submitKyc(dealId);
+}
+function readKyc() {
+  const a = {};
+  KYC_Q.forEach(q => { a[q.id] = [...document.querySelectorAll(`input[name="k-${q.id}"]:checked`)].map(i => i.value); });
+  return a;
+}
+/* Finance clears: the sales owner is told the deal is ready to move to Qualified, and sales moves it */
+function submitKyc(dealId) {
+  const a = readKyc(), x = dealById(dealId), r = reviews[dealId];
+  const inQ = x.stage === 'qualified' && !x.outcome;
+  Object.assign(r, { status: 'cleared', a, reviewedBy: 'FA', reviewedAt: nowIso(), used: inQ });
+  addHistory(dealId, { t: 'Finance cleared the payment terms checklist', by: 'FA', tag: 'Cleared', tagCls: 'won', comment: `${CLS_LABEL[a.cls[0]]}. ${inQ ? 'Deal is already in Qualified.' : 'Sales notified: ready to move to Qualified.'}` });
+  notify({ to: x.owner, dealId, kind: 'ok', t: inQ ? `${x.name} cleared by Finance` : `${x.name} is ready to move to Qualified`,
+    p: `Finance completed the payment terms checklist (${CLS_LABEL[a.cls[0]]}). ${inQ ? `${x.id} stays in Qualified.` : `You can now move ${x.id} to Qualified.`}` });
+  toast(`Cleared · ${OWNERS[x.owner].name} notified that ${x.id} is ready for Qualified`); render();
+}
+/* Finance opening a pending profile marks it as under review */
+function markOpened(id) {
+  const r = reviews[id];
+  if (!r || r.status !== 'pending' || r.openedAt) return;
+  Object.assign(r, { openedAt: nowIso(), openedBy: 'FA' });
+  addHistory(id, { t: 'Finance opened the customer profile for review', by: 'FA', tag: 'Under review' });
+}
+const readyForQ = id => { const r = reviews[id]; return !!r && r.status === 'cleared' && !r.used; };
+/* Finance sends a deal back when something is missing */
+function returnModal(dealId) {
+  const x = dealById(dealId);
+  modal(`<h3>Send back to sales</h3><p class="lead">${esc(x.name)} · ${x.id} · ${esc(OWNERS[x.owner].name)} is notified and the deal stays where it is.</p>
+    <div class="field"><label for="rt-c">What does sales need to provide?</label><textarea id="rt-c" placeholder="e.g. Signed credit application and last 6 months of bank statements"></textarea></div>
+    <div id="rt-err"></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn dark" onclick="doReturn('${dealId}')">Send back</button></div>`);
+}
+function doReturn(dealId) {
+  const c = $('#rt-c').value.trim();
+  if (!c) { $('#rt-err').innerHTML = '<p class="err">Tell sales what is missing so they can fix it.</p>'; return; }
+  const x = dealById(dealId), r = reviews[dealId];
+  Object.assign(r, { status: 'returned', comment: c, reviewedBy: 'FA', reviewedAt: nowIso() });
+  addHistory(dealId, { t: 'Finance sent the deal back for more information', by: 'FA', tag: 'Sent back', comment: c });
+  notify({ to: x.owner, dealId, kind: 'warn', t: `${x.name} needs more information`, p: `Finance sent ${x.id} back: ${c}` });
+  closeModal(); toast(`Sent back · ${OWNERS[x.owner].name} notified`); render();
+}
+
+/* ---- deal page: where the Finance review stands ---- */
+/* ---- deal page: Finance review tracker (sent → under review → reviewed) ---- */
+const when = (at, by) => `${by ? `${OWNERS[by].name} · ` : ''}${longD(at)} · ${time(at)}`;
+function financeTracker(x) {
+  let r = reviews[x.id];
+  if (r && r.status === 'withdrawn') r = null;
+  if (!r && (x.outcome || x.stage === 'quote')) return '';
+  const review = `#review-${x.id.toLowerCase()}`;
+  let pill, steps, foot = '';
+  if (!r) {
+    pill = '<span class="pill stage">Not sent to Finance</span>';
+    steps = [['todo', 'Sent to Finance', 'Not sent yet'], ['todo', 'Under review by Finance', 'Waiting'], ['todo', 'Reviewed by Finance', 'Waiting']];
+    foot = `<span>The customer profile is emailed to Finance when you move this deal to Qualified.</span><button class="btn sm primary" onclick="sendFinanceModal('${x.id}')">Send to Finance</button>`;
+  } else {
+    const sent = ['done', 'Sent to Finance', `${when(r.sentAt, r.sentBy)}${r.mailedTo ? `<br>Emailed to ${esc(r.mailedTo)}` : ''}`];
+    const opened = r.openedAt ? ['done', 'Under review by Finance', `Opened by ${when(r.openedAt, r.openedBy)}`] : null;
+    if (r.status === 'pending') {
+      pill = r.openedAt ? '<span class="pill review">Under Finance review</span>' : '<span class="pill review">Sent to Finance</span>';
+      steps = [sent, opened ? ['now', opened[1], opened[2]] : ['now', 'Under review by Finance', 'Waiting for Finance to open the profile'], ['todo', 'Reviewed by Finance', 'Waiting']];
+      foot = `<span>You'll be notified when Finance has reviewed the profile.</span><a class="btn sm" href="${review}">View customer profile ${ICON.go}</a>`;
+    } else if (r.status === 'returned') {
+      pill = '<span class="pill back">Sent back by Finance</span>';
+      steps = [sent, opened || ['done', 'Under review by Finance', ''], ['bad', 'Reviewed: sent back', `${when(r.reviewedAt, r.reviewedBy)}<br><b>${esc(r.comment)}</b>`]];
+      foot = `<span>Fix what Finance asked for, then send the profile again.</span><button class="btn sm primary" onclick="sendFinanceModal('${x.id}')">Resend to Finance</button>`;
+    } else {
+      pill = `<span class="pill pass">${ICON.check} Reviewed by Finance</span>`;
+      steps = [sent, opened || ['done', 'Under review by Finance', ''], ['done', 'Reviewed: cleared', `${when(r.reviewedAt, r.reviewedBy)}<br>${esc(CLS_LABEL[r.a.cls[0]])}`]];
+      foot = readyForQ(x.id)
+        ? `<span><b>Ready to move to Qualified.</b></span><button class="btn sm dark" onclick="moveDeal('${x.id}', 'qualified')">Move to Qualified</button>`
+        : `<span>Payment terms checklist cleared.</span><a class="btn sm" href="${review}">View review ${ICON.go}</a>`;
+    }
+  }
+  return `<div class="panel ftrack-p">
+    <div class="lk-head" style="margin-bottom:18px"><p class="sec-t" style="margin:0">Finance review</p>${pill}</div>
+    <ol class="ftrack">${steps.map(([st, t, d]) => `<li class="${st}"><span class="dt">${st === 'done' ? ICON.check : st === 'bad' ? '!' : ''}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol>
+    <div class="ftrack-f">${foot}</div></div>`;
+}
+function dealReviewCallout(x) {
+  const r = reviews[x.id];
+  if (!r || x.outcome) return '';
+  return '';
+}
+function kycPanel(x) {
+  const r = reviews[x.id];
+  const title = '<p class="sec-t" style="margin:0">Payment terms checklist</p>';
+  if (!r || r.status !== 'cleared') return '';
+  if (r.status === 'pending') return `<div class="panel">
+    <div class="lk-head" style="margin-bottom:16px">${title}<span class="pill review">With Finance</span></div>
+    <div class="kv"><div><div class="k">Sent by</div><div class="v">${OWNERS[r.sentBy].name}</div></div><div><div class="k">Sent</div><div class="v tnum">${longD(r.sentAt)} · ${time(r.sentAt)}</div></div>
+      <div class="full"><div class="k">Requested payment terms</div><div class="v">${esc(termsText(r))}</div></div></div>
+    <div style="margin-top:18px"><a class="btn sm" href="#review-${x.id.toLowerCase()}">Open customer profile review ${ICON.go}</a></div></div>`;
+  if (r.status === 'returned') return `<div class="panel">
+    <div class="lk-head" style="margin-bottom:16px">${title}<span class="pill back">Sent back</span></div>
+    <div class="kyc-meta" style="margin:0 0 12px">${OWNERS[r.reviewedBy].name} · ${longD(r.reviewedAt)} · ${time(r.reviewedAt)}</div>
+    <div class="note" style="min-height:0">${esc(r.comment)}</div>
+    <div style="margin-top:16px"><button class="btn sm primary" onclick="sendFinanceModal('${x.id}')">Resend to Finance</button></div></div>`;
+  return `<div class="panel">
+    <div class="lk-head" style="margin-bottom:20px">${title}
+      <div style="display:flex;gap:8px;align-items:center"><span class="pill pass">${ICON.check} Cleared by Finance</span><a class="btn sm" href="#review-${x.id.toLowerCase()}">View review</a></div></div>
+    <div class="kyc-meta">Cleared by ${OWNERS[r.reviewedBy].name} · ${longD(r.reviewedAt)} · ${time(r.reviewedAt)}</div>
+    <div class="kv"><div class="full"><div class="k">Customer classification</div><div class="v">${esc(CLS_LABEL[r.a.cls[0]])}</div></div>
+      <div class="full"><div class="k">Requested payment terms</div><div class="v">${esc(termsText(r))}</div></div></div>
+    <details class="kyc-all"><summary>View checklist</summary>${checklistSummary(r.a)}</details>
+  </div>`;
+}
+
+let seq = 23;
+function newDealModal() {
+  modal(`<h3>New deal</h3><p class="lead">Starts in Prospect. ID: OP-26-11-0${seq}</p>
+    <div class="field"><label for="n-n">Company</label><input id="n-n" placeholder="e.g. Dangote Fertilizer"></div>
+    <div class="frow"><div class="field"><label for="n-ct">Contact</label><input id="n-ct"></div><div class="field"><label for="n-a">Amount (USD)</label><input id="n-a" type="number" min="0" value="0"></div></div>
+    <div class="frow"><div class="field"><label for="n-o">Owner</label><select id="n-o">${Object.entries(OWNERS).map(([k, o]) => `<option value="${k}" ${k === 'NM' ? 'selected' : ''}>${o.name}</option>`).join('')}</select></div>
+    <div class="field"><label for="n-c">Class</label><select id="n-c"><option>SME</option><option>Growth</option><option>Enterprise</option></select></div></div>
+    <div id="n-err"></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="createDeal()">Create deal</button></div>`);
+}
+function createDeal() {
+  const name = $('#n-n').value.trim();
+  if (!name) { $('#n-err').innerHTML = '<p class="err">Enter the company name to create the deal.</p>'; return; }
+  const id = `OP-26-11-0${seq++}`;
+  deals.unshift({ id, name, amount: Math.max(0, +$('#n-a').value || 0), owner: $('#n-o').value, cls: $('#n-c').value, created: '2026-11-06', stage: 'prospect', contact: $('#n-ct').value.trim() || 'Not set', product: 'Not set' });
+  closeModal(); toast(`${id} created`); render();
+}
+
+render();
+</script>
+
+</html>
