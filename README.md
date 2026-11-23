@@ -1,8 +1,16 @@
 # OnePort365 CRM: deals linked to RFQs and quotes
 
-Click-through prototype in `prototype/index.html` (open it in a browser, no build step).
-`OnePort365-CRM-Prototype.html` is a standalone single-file copy to download and open offline.
+The whole prototype is one file: **`index.html`**. It includes the Operational dashboard, CRM, RFQ, Finance and the
+customer profile review. Open it in a browser (no build step), download it to use offline, or deploy the repository as a
+static site (e.g. on Vercel), where it is served as the home page.
 
+- **Dashboard** is the first item on the side nav and the page the prototype opens on (`#dashboard`). It is the
+  Operational dashboard (shipment tracker: search, owner/stage/status filters, Prospect → Pre-Booking → Booking → Post
+  Booking bars, pagination and a step-by-step drawer), embedded unchanged from `OnePort365-Prototype.html`. Every CRM deal is
+  added to the tracker at its stage (Prospect → Deal created, Contacted → Customer contacted, Qualified → RFQ, Quote Issued →
+  Quote issued, Won → Customer acceptance, Lost → Lost) and takes the place of any sample job with the same ID; the other CRM deals are listed after the sample jobs, so the
+  dashboard keeps its own order (page 1 shows jobs across Prospect, Pre-Booking, Booking and Post Booking). In the drawer, the
+  Prospect, RFQ and Quote issued links open that deal, its RFQ or its quote in this prototype; sample-only jobs say so.
 - RFQs, quotes and shipments are linked to deals by the system, never by hand.
 - Every deal has an ID (`OP-YY-MM-NNN`), shown on board cards, the list view and the deal page.
 - Stage rule: an RFQ is tied to a deal in **Qualified**; a quote is tied to a deal in **Quote Issued**. The deal page shows an
