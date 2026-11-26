@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Cleared by Finance: {{company_name}} ({{deal_id}})</title>
+<!--
+  OnePort365 email: Finance has cleared the payment terms review (sent to the deal's sales owner).
+  Same design as finance-review-request.html. Tokens: dark green #023819, lime #BFFB4F, light green #D1DBBD,
+  cream #FDFBF1, text #383838, muted #808080, success chip #E1F1E8 / #0f7a45, card border ~ #E0E7E2, divider ~ #EDF1EE.
+  Placeholders (Mustache/Handlebars style):
+    {{sales_owner_first_name}} {{company_name}} {{deal_id}} {{classification_label}} {{approved_terms}}
+    {{finance_reviewer_name}} {{reviewed_at}} {{finance_comment}} {{deal_link}}
+    {{#finance_comment}} ... {{/finance_comment}}   the comment block only shows when Finance left a comment
+-->
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<style>table, td, h1, h2, p, a, span { font-family: "Segoe UI", Arial, sans-serif !important; }</style>
+<![endif]-->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; width: 100% !important; background: #FDFBF1; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { border-collapse: collapse; mso-table-lspace: 0; mso-table-rspace: 0; }
+  a { color: #023819; }
+  .btn a:hover { background: #a9e83a !important; border-color: #a9e83a !important; }
+  @media only screen and (max-width: 620px) {
+    .wrap { width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .kv-k, .kv-v { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+    .kv-k { padding-bottom: 2px !important; border-bottom: 0 !important; }
+    .kv-v { padding-top: 0 !important; }
+    .h1 { font-size: 21px !important; line-height: 28px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#FDFBF1;">
+<!-- inbox preview text -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#FDFBF1;">
+  Finance cleared {{company_name}} ({{deal_id}}). You can now move the deal to Qualified.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FDFBF1;">
+<tr><td align="center" style="padding:32px 12px;">
+
+  <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+
+    <!-- Header -->
+    <tr>
+      <td class="px" style="background:#023819;border-radius:16px 16px 0 0;padding:22px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:20px;line-height:24px;font-weight:600;color:#FFFFFF;letter-spacing:-0.2px;">
+              OnePort <span style="font-weight:700;color:#BFFB4F;">365</span>
+            </td>
+            <td align="right" style="font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;">
+              <span style="display:inline-block;background:#BFFB4F;color:#023819;font-size:12px;line-height:16px;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap;">&#10003; Cleared by Finance</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Card -->
+    <tr>
+      <td style="background:#FFFFFF;border:1px solid #E0E7E2;border-top:0;border-radius:0 0 16px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+          <!-- Intro -->
+          <tr>
+            <td class="px" style="padding:32px 32px 8px;font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;color:#383838;">
+              <p style="margin:0 0 8px;font-size:12px;line-height:16px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#808080;">Ready to move to Qualified</p>
+              <h1 class="h1" style="margin:0 0 16px;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:24px;line-height:32px;font-weight:700;color:#023819;">{{company_name}}</h1>
+              <p style="margin:0 0 12px;font-size:15px;line-height:24px;">Hello {{sales_owner_first_name}},</p>
+              <p style="margin:0;font-size:15px;line-height:24px;">Finance has completed the payment terms review for <strong style="color:#023819;">{{company_name}}</strong> ({{deal_id}}). You can now move <strong style="color:#023819;">{{deal_id}}</strong> to Qualified.</p>
+            </td>
+          </tr>
+
+          <!-- Review outcome -->
+          <tr>
+            <td class="px" style="padding:24px 32px 0;">
+              <p style="margin:0 0 10px;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#023819;">Review outcome</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E0E7E2;border-radius:12px;border-collapse:separate;font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:20px;">
+                <tr>
+                  <td class="kv-k" width="38%" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;color:#808080;">Deal ID</td>
+                  <td class="kv-v" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;"><span style="display:inline-block;background:#EDEFE8;color:#023819;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.3px;padding:3px 9px;border-radius:6px;border:1px solid #E0E7E2;">{{deal_id}}</span></td>
+                </tr>
+                <tr>
+                  <td class="kv-k" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;color:#808080;">Status</td>
+                  <td class="kv-v" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;"><span style="display:inline-block;background:#E1F1E8;color:#0f7a45;font-size:13px;line-height:18px;font-weight:600;padding:4px 10px;border-radius:6px;">&#10003; Cleared</span></td>
+                </tr>
+                <tr>
+                  <td class="kv-k" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;color:#808080;">Classification</td>
+                  <td class="kv-v" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;"><span style="display:inline-block;background:#D1DBBD;color:#023819;font-size:13px;line-height:18px;font-weight:600;padding:4px 10px;border-radius:6px;">{{classification_label}}</span></td>
+                </tr>
+                <tr>
+                  <td class="kv-k" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;color:#808080;">Approved terms</td>
+                  <td class="kv-v" style="padding:12px 16px;border-bottom:1px solid #EDF1EE;color:#023819;font-weight:700;">{{approved_terms}}</td>
+                </tr>
+                <tr>
+                  <td class="kv-k" style="padding:12px 16px;color:#808080;">Reviewed by</td>
+                  <td class="kv-v" style="padding:12px 16px;color:#383838;">{{finance_reviewer_name}} <span style="color:#808080;">on {{reviewed_at}}</span></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Finance comment (only when there is one) -->
+          {{#finance_comment}}
+          <tr>
+            <td class="px" style="padding:24px 32px 0;">
+              <p style="margin:0 0 10px;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#023819;">Finance comment</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:#F4F7EC;border-radius:12px;padding:14px 16px;font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:22px;color:#383838;">{{finance_comment}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/finance_comment}}
+
+          <!-- Checklist completed -->
+          <tr>
+            <td class="px" style="padding:24px 32px 0;">
+              <p style="margin:0 0 10px;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:#023819;">Checklist completed</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;font-size:14px;line-height:20px;color:#383838;">
+                <tr>
+                  <td width="28" valign="top" style="padding:4px 0;"><span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:999px;background:#E1F1E8;color:#0f7a45;font-size:11px;font-weight:700;">&#10003;</span></td>
+                  <td style="padding:4px 0;"><strong style="color:#023819;">A.</strong> Customer classification</td>
+                </tr>
+                <tr>
+                  <td width="28" valign="top" style="padding:4px 0;"><span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:999px;background:#E1F1E8;color:#0f7a45;font-size:11px;font-weight:700;">&#10003;</span></td>
+                  <td style="padding:4px 0;"><strong style="color:#023819;">B.</strong> Onboarding requirements</td>
+                </tr>
+                <tr>
+                  <td width="28" valign="top" style="padding:4px 0;"><span style="display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:999px;background:#E1F1E8;color:#0f7a45;font-size:11px;font-weight:700;">&#10003;</span></td>
+                  <td style="padding:4px 0;"><strong style="color:#023819;">C.</strong> Clearance: service may proceed</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Call to action -->
+          <tr>
+            <td class="px" style="padding:28px 32px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="btn">
+                <tr>
+                  <td align="center" style="border-radius:8px;background:#BFFB4F;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{deal_link}}" style="height:46px;v-text-anchor:middle;width:200px;" arcsize="18%" stroke="f" fillcolor="#BFFB4F">
+                    <w:anchorlock/><center style="color:#023819;font-family:Segoe UI,Arial,sans-serif;font-size:15px;font-weight:bold;">View deal &rarr;</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="{{deal_link}}" target="_blank" style="display:inline-block;background:#BFFB4F;border:1px solid #BFFB4F;border-radius:8px;padding:13px 26px;font-family:'Poppins',-apple-system,'Segoe UI',Arial,sans-serif;font-size:15px;line-height:20px;font-weight:600;color:#023819;text-decoration:none;">View deal &rarr;</a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:4px 32px 32px;font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;font-size:12px;line-height:18px;color:#808080;">
+              Button not working? Open this link: <a href="{{deal_link}}" style="color:#023819;text-decoration:underline;word-break:break-all;">{{deal_link}}</a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td class="px" align="center" style="padding:20px 32px 0;font-family:'Open Sans',-apple-system,'Segoe UI',Arial,sans-serif;font-size:12px;line-height:18px;color:#808080;">
+        Sent automatically by the OnePort365 CRM when Finance clears a payment terms review.<br>
+        Payment terms can now be shared with the customer.
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>
+</body>
+</html>
